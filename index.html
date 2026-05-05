@@ -10,11 +10,52 @@
     <script src="main.js"></script>
   </head>
   <body>
+    <div id="loadingScreen" class="loading-screen" role="status" aria-live="polite">
+      <div class="loading-spinner" aria-hidden="true"></div>
+      <p class="loading-text">Starting AR camera…</p>
+      <p class="loading-hint">If your browser asks, allow camera access.</p>
+    </div>
+
+    <div id="onboardingOverlay" class="onboarding" role="dialog" aria-modal="true" aria-labelledby="onboardingTitle" hidden>
+      <div class="onboarding-card">
+        <h2 id="onboardingTitle" class="onboarding-title">Welcome, space explorer! 🚀</h2>
+        <p class="onboarding-intro">
+          Point your camera at a printed marker to see the Solar System or a black hole appear in 3D.
+        </p>
+        <ol class="onboarding-steps">
+          <li><strong>Print a marker.</strong> Tap a button below to download. Print on plain paper at any size — bigger is easier.</li>
+          <li><strong>Place it flat</strong> on a desk in good light, with white space around the black border.</li>
+          <li><strong>Point your camera</strong> at the marker. The 3D model appears on top!</li>
+        </ol>
+        <div class="onboarding-markers">
+          <a class="onboarding-marker"
+             href="https://raw.githubusercontent.com/AR-js-org/AR.js/master/data/images/HIRO.jpg"
+             download="hiro-marker.jpg" target="_blank" rel="noopener">
+            <span class="onboarding-marker-tag">Solar System</span>
+            <span class="onboarding-marker-name">Hiro marker</span>
+            <span class="onboarding-marker-download">Download ↓</span>
+          </a>
+          <a class="onboarding-marker"
+             href="https://raw.githubusercontent.com/AR-js-org/AR.js/master/data/images/KANJI.jpg"
+             download="kanji-marker.jpg" target="_blank" rel="noopener">
+            <span class="onboarding-marker-tag">Black Hole</span>
+            <span class="onboarding-marker-name">Kanji marker</span>
+            <span class="onboarding-marker-download">Download ↓</span>
+          </a>
+        </div>
+        <p class="onboarding-tip">Tip: Tap a planet or the Sun to learn fun facts!</p>
+        <button id="onboardingClose" class="onboarding-button" type="button">Got it — let's go!</button>
+      </div>
+    </div>
+
     <div id="hudLabel" class="hud-label" role="status" aria-live="polite">
       ☀️ Hiro: Solar System · Kanji: Black Hole
     </div>
     <button id="modeButton" class="mode-button" type="button" aria-label="Change black hole mode">
       Normal
+    </button>
+    <button id="helpButton" class="help-button" type="button" aria-label="Show how-to instructions">
+      ?
     </button>
 
     <a-scene
