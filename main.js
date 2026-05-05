@@ -779,6 +779,27 @@
       }));
 
       this.sun = new this.three.Mesh(geometry, material);
+      this.sunState = {
+        mesh: this.sun,
+        data: {
+          name: "Sun",
+          info: "A G-type main-sequence star and the heart of the Solar System. ~99.86% of the system's mass; surface temperature ~5,500°C."
+        }
+      };
+      this.sun.userData.planetState = this.sunState;
+
+      const sunPickRadius = Math.max(SOLAR_SUN_RADIUS * PLANET_PICK_TARGET_SCALE, PLANET_PICK_TARGET_MIN_SIZE);
+      const sunPickGeometry = this.track(new this.three.SphereGeometry(sunPickRadius, PLANET_PICK_TARGET_SEGMENTS, PLANET_PICK_TARGET_SEGMENTS));
+      const sunPickMaterial = this.track(new this.three.MeshBasicMaterial({
+        transparent: true,
+        opacity: 0,
+        depthWrite: false
+      }));
+      this.sunPickTarget = new this.three.Mesh(sunPickGeometry, sunPickMaterial);
+      this.sunPickTarget.name = "Sun pick target";
+      this.sunPickTarget.userData.planetState = this.sunState;
+      this.sun.add(this.sunPickTarget);
+
       this.root.add(this.sun);
     },
 
@@ -1155,6 +1176,12 @@
       this.raycaster.setFromCamera(this.pointer, camera);
       const meshes = [];
 
+      if (this.sunPickTarget) {
+        meshes.push(this.sunPickTarget);
+      }
+      if (this.sun) {
+        meshes.push(this.sun);
+      }
       for (const planet of this.planets) {
         if (planet.pickTarget) {
           meshes.push(planet.pickTarget);
