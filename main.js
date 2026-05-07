@@ -150,12 +150,24 @@
   // Project Hail Mary ships, stationed near Tau Ceti e (the habitable-zone
   // planet they're studying in the book). Coordinates are static — the planets
   // orbit past, the ships hold their position.
+  //
+  // To swap the procedural ship for an external 3D model:
+  //   1. Host a .glb / .gltf model on a public URL (GitHub Pages, jsDelivr,
+  //      Sketchfab download → re-uploaded somewhere CORS-permissive, etc.)
+  //   2. Paste the URL into modelUrl below.
+  //   3. Tweak modelScale (one number) and modelRotation ([x, y, z] radians)
+  //      to fit the scene. The procedural ship is ~0.08 long, so models
+  //      typically need scales between 0.001 and 0.05.
+  // If modelUrl is empty or the load fails, the procedural ship renders.
   const TAU_CETI_SHIPS = [
     {
       name: "Hail Mary",
       kind: "hailMary",
       position: [-0.045, 0.045, 0.5],
       pickRadius: 0.06,
+      modelUrl: "./source/Project%20Hail%20Mary.glb",
+      modelScale: 0.002,
+      modelRotation: [0, 0, 0],
       info: {
         name: "Hail Mary",
         diameter: "~47 m long (with radiators)",
@@ -168,6 +180,9 @@
       kind: "blipA",
       position: [0.06, 0.06, 0.51],
       pickRadius: 0.07,
+      modelUrl: "", // e.g. "https://cdn.jsdelivr.net/gh/<user>/<repo>/models/blip-a.glb"
+      modelScale: 0.02,
+      modelRotation: [0, 0, 0],
       info: {
         name: "Blip-A",
         diameter: "~210 m across (xenonite hull)",
@@ -212,7 +227,8 @@
     tauCeti: {
       foundText: "Tau Ceti System · tap a planet for info",
       sceneScale: 0.62,
-      sceneYOffset: 0.18,
+      // Star sits centered on the Kanji marker; planets orbit in the marker plane.
+      sceneYOffset: 0,
       star: {
         info: null,
         texture: "tauCetiStar",
@@ -968,12 +984,8 @@
       }
       const T = this.three;
       for (const shipDef of shipDefs) {
-        let mesh;
-        if (shipDef.kind === "hailMary") {
-          mesh = this.createHailMaryMesh();
-        } else if (shipDef.kind === "blipA") {
-          mesh = this.createBlipAMesh();
-        } else {
+        const mesh = this.createShipMesh(shipDef);
+        if (!mesh) {
           continue;
         }
         mesh.position.fromArray(shipDef.position);
@@ -994,14 +1006,75 @@
           mesh,
           pickTarget,
           data: shipDef.info,
-          centrifuge: mesh.userData.centrifuge || null
+          centrifuge: mesh.userData.centrifuge || null,
+          loadedModel: null
         };
         mesh.userData.planetState = shipState;
         pickTarget.userData.planetState = shipState;
 
         this.ships.push(shipState);
         this.root.add(mesh, pickTarget);
+
+        // If a GLB URL is configured, try to load it. On success, the loaded
+        // model takes over and the procedural mesh is hidden. On failure, the
+        // procedural mesh stays visible (graceful fallback for offline / CORS).
+        if (shipDef.modelUrl) {
+          this.tryLoadShipModel(shipState, shipDef);
+        }
       }
+    },
+
+    createShipMesh: function (shipDef) {
+      if (shipDef.kind === "hailMary") {
+        return this.createHailMaryMesh();
+      }
+      if (shipDef.kind === "blipA") {
+        return this.createBlipAMesh();
+      }
+      return null;
+    },
+
+    tryLoadShipModel: function (shipState, shipDef) {
+      const T = this.three;
+      const LoaderCtor = T.GLTFLoader || (typeof THREE !== "undefined" && THREE.GLTFLoader);
+      if (!LoaderCtor) {
+        // Bundled three.js doesn't expose GLTFLoader — keep the procedural mesh.
+        console.warn("GLTFLoader unavailable; using procedural ship for", shipDef.name);
+        return;
+      }
+
+      const loader = new LoaderCtor();
+      loader.load(
+        shipDef.modelUrl,
+        (gltf) => {
+          const model = gltf && (gltf.scene || (gltf.scenes && gltf.scenes[0]));
+          if (!model) {
+            return;
+          }
+          model.position.fromArray(shipDef.position);
+          if (typeof shipDef.modelScale === "number") {
+            model.scale.setScalar(shipDef.modelScale);
+          }
+          if (Array.isArray(shipDef.modelRotation)) {
+            model.rotation.set(
+              shipDef.modelRotation[0] || 0,
+              shipDef.modelRotation[1] || 0,
+              shipDef.modelRotation[2] || 0
+            );
+          }
+          // Replace the procedural mesh with the loaded model. Pick target stays
+          // unchanged so taps still register.
+          shipState.mesh.visible = false;
+          shipState.loadedModel = model;
+          shipState.centrifuge = null; // GLB owns its own animation, if any
+          this.root.add(model);
+        },
+        undefined,
+        (err) => {
+          console.warn(`Failed to load ${shipDef.name} model from ${shipDef.modelUrl}:`, err);
+          // Procedural mesh remains visible — no further action needed.
+        }
+      );
     },
 
     createHailMaryMesh: function () {
@@ -1771,6 +1844,26 @@
 
       if (this.infoPanel) {
         this.infoPanel.remove();
+      }
+
+      // GLB-loaded ship models aren't tracked in this.disposables, so walk
+      // their scene graphs and dispose geometries / materials manually.
+      if (this.ships) {
+        for (const ship of this.ships) {
+          if (!ship.loadedModel) continue;
+          ship.loadedModel.traverse((child) => {
+            if (child.geometry && typeof child.geometry.dispose === "function") {
+              child.geometry.dispose();
+            }
+            const mat = child.material;
+            if (!mat) return;
+            if (Array.isArray(mat)) {
+              for (const m of mat) m.dispose && m.dispose();
+            } else if (typeof mat.dispose === "function") {
+              mat.dispose();
+            }
+          });
+        }
       }
 
       this.el.object3D.remove(this.root);
