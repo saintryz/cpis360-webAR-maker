@@ -1,15 +1,9 @@
 (function () {
   "use strict";
 
-  // Visual scale is tuned for a printed Hiro marker sitting on a desk.
-  const SCENE_SCALE = 0.82;
-  const SCENE_Y_OFFSET = 0.28;
-
   // Device/performance constants.
   const MOBILE_QUERY = "(max-width: 760px)";
   const LOW_POWER_CPU_CORES = 4;
-  const DESKTOP_PARTICLE_COUNT = 72;
-  const MOBILE_PARTICLE_COUNT = 42;
   const DESKTOP_SEGMENTS = 160;
   const MOBILE_SEGMENTS = 112;
   const DESKTOP_SPHERE_SEGMENTS = 48;
@@ -17,122 +11,18 @@
 
   // UI constants.
   const HUD_ID = "hudLabel";
-  const MODE_BUTTON_ID = "modeButton";
   const HUD_HIDDEN_CLASS = "is-hidden";
-  const HUD_DEFAULT_TEXT = "☀️ Hiro: Solar System · tap a planet for info · Kanji: Black Hole";
-  const HUD_FOUND_BLACKHOLE_TEXT = "Marker found · Black hole locked";
-  const HUD_FOUND_SOLAR_TEXT = "Marker found · tap a planet for info";
+  const HUD_DEFAULT_TEXT = "☀️ Hiro: Solar System · Kanji: Tau Ceti System · tap a planet for info";
   const HUD_LOST_TEXT = "Searching for Hiro or Kanji marker";
   const HUD_HIDE_DELAY_MS = 2800;
   const SUPPORT_MESSAGE_TEXT = "Camera AR needs a browser with WebRTC camera support. Use HTTPS or localhost if your browser blocks camera access.";
   const LOCALHOST_NAMES = ["localhost", "127.0.0.1", "::1"];
 
-  // Interaction mode constants.
-  const MODES = [
-    { name: "Normal", disk: 1, particles: 1, gravity: 1, glow: 1 },
-    { name: "Dramatic", disk: 1.55, particles: 1.35, gravity: 1.55, glow: 1.45 },
-    { name: "Calm", disk: 0.55, particles: 0.62, gravity: 0.72, glow: 0.72 }
-  ];
-
-  // Singularity constants.
-  const SINGULARITY_RADIUS = 0.2;
-  const SINGULARITY_COLOR = "#08020d";
-  const SINGULARITY_EMISSIVE = "#190022";
-  const SINGULARITY_PULSE_SPEED = 0.0018;
-  const SINGULARITY_PULSE_AMOUNT = 0.05;
-
-  // Accretion disk constants.
-  const DISK_INNER_RADIUS = 0.25;
-  const DISK_MIDDLE_RADIUS = 0.52;
-  const DISK_OUTER_RADIUS = 0.8;
-  const DISK_TEXTURE_SIZE = 512;
-  const DISK_TEXTURE_STREAKS = 820;
-  const DISK_COLOR_OUTER = "#b84103";
-  const DISK_COLOR_MIDDLE = "#ffd018";
-  const DISK_COLOR_INNER = "#fff8e7";
-  const DISK_COLOR_HOT = "#ffffff";
-  const DISK_ROTATION_SPEED_INNER = 0.00062;
-  const DISK_ROTATION_SPEED_OUTER = 0.00031;
-  const DISK_GLOW_ROTATION_SPEED = 0.00024;
-  const DISK_TILT_X = -82;
-  const DISK_TILT_Z = 12;
-  const DISK_INNER_OPACITY = 0.94;
-  const DISK_OUTER_OPACITY = 0.82;
-  const DISK_GLOW_OPACITY = 0.24;
-  const DISK_OVERLAP_SCALE = 0.92;
-  const DISK_GLOW_INNER_SCALE = 0.88;
-  const DISK_GLOW_OUTER_SCALE = 1.08;
-  const DISK_TEXTURE_CENTER_RADIUS = 4;
-  const DISK_TEXTURE_OUTER_HOT_STOP = 0.28;
-  const DISK_TEXTURE_INNER_HOT_STOP = 0.2;
-  const DISK_TEXTURE_OUTER_MIDDLE_STOP = 0.58;
-  const DISK_TEXTURE_INNER_MIDDLE_STOP = 0.48;
-  const DISK_TEXTURE_OUTER_COLOR_STOP = 0.86;
-  const DISK_TEXTURE_GLOW_EDGE_OPACITY = 0.12;
-  const DISK_TEXTURE_STREAK_MIN_RADIUS = 0.16;
-  const DISK_TEXTURE_STREAK_MAX_RADIUS = 0.96;
-  const DISK_TEXTURE_STREAK_MIN_LENGTH = 0.04;
-  const DISK_TEXTURE_STREAK_MAX_LENGTH = 0.22;
-  const DISK_TEXTURE_STREAK_MIN_ALPHA = 0.05;
-  const DISK_TEXTURE_STREAK_MAX_ALPHA = 0.22;
-  const DISK_TEXTURE_STREAK_MIN_GREEN = 140;
-  const DISK_TEXTURE_STREAK_MAX_GREEN = 245;
-  const DISK_TEXTURE_STREAK_BLUE = 48;
-  const DISK_TEXTURE_STREAK_MIN_WIDTH = 1;
-  const DISK_TEXTURE_STREAK_MAX_WIDTH = 4;
-  const DISK_TEXTURE_FADE_INNER = 0.1;
-  const DISK_TEXTURE_FADE_MIDDLE = 0.84;
-  const DISK_TEXTURE_FADE_MIDDLE_ALPHA = 0.92;
-
-  // Glow, lensing, and jet constants.
-  const HALO_RADIUS = 0.34;
-  const HALO_COLOR = "#6b5cff";
-  const HALO_OPACITY = 0.32;
-  const LENS_RADIUS = 0.96;
-  const LENS_COLOR = "#75a7ff";
-  const LENS_OPACITY = 0.075;
-  const LENS_RING_OPACITY = 0.16;
-  const LENS_ROTATION_SPEED = -0.00012;
-  const JET_HEIGHT = 0.82;
-  const JET_RADIUS = 0.055;
-  const JET_COLOR = "#78ccff";
-  const JET_OPACITY = 0.18;
-  const JET_PULSE_SPEED = 0.0022;
-  const JET_PULSE_AMOUNT = 0.08;
-
-  // Particle constants.
-  const PARTICLE_MIN_RADIUS = 0.36;
-  const PARTICLE_MAX_RADIUS = 0.74;
-  const PARTICLE_RESET_RADIUS = 0.29;
-  const PARTICLE_MIN_SIZE = 0.012;
-  const PARTICLE_MAX_SIZE = 0.037;
-  const PARTICLE_MIN_SPEED = 0.00055;
-  const PARTICLE_MAX_SPEED = 0.0017;
-  const PARTICLE_MIN_DRAIN = 0.000018;
-  const PARTICLE_MAX_DRAIN = 0.000052;
-  const PARTICLE_VERTICAL_WOBBLE = 0.045;
-  const PARTICLE_TILT_MIN = -14;
-  const PARTICLE_TILT_MAX = 14;
-  const PARTICLE_OPACITY_BANDS = [0.92, 0.64, 0.4];
-  const PARTICLE_COLORS = ["#ff7a18", "#ffc92b", "#fff4d0", "#8a7dff", "#66ccff"];
-  const TRAIL_STEPS = 4;
-  const TRAIL_ANGLE_GAP = 0.13;
-  const TRAIL_RADIUS_GAP = 0.018;
-  const TRAIL_SIZE_FADE = 0.72;
-  const TRAIL_OPACITY_BASE = 0.22;
-  const PARTICLE_TILT_AMOUNT = 0.08;
-  const PARTICLE_TWINKLE_BASE = 0.86;
-  const PARTICLE_TWINKLE_SPEED = 0.003;
-  const PARTICLE_TWINKLE_AMOUNT = 0.2;
   const DEFAULT_DELTA_MS = 16.67;
 
-  // Solar system constants.
-  const SOLAR_SCENE_SCALE = 0.62;
-  const SOLAR_SCENE_Y_OFFSET = 0.18;
+  // Solar system constants. (Per-system numbers like sun radius, scene scale,
+  // and asteroid-belt geometry live inside the SYSTEMS map below.)
   const SOLAR_ORBIT_TILT_X = -90;
-  const SOLAR_SUN_RADIUS = 0.13;
-  const SOLAR_SUN_COLOR = "#ffcc45";
-  const SOLAR_SUN_EMISSIVE = "#ff8a00";
   const SOLAR_SUN_PULSE_SPEED = 0.002;
   const SOLAR_SUN_PULSE_AMOUNT = 0.045;
   const SOLAR_ORBIT_OPACITY = 0.28;
@@ -199,23 +89,15 @@
   const SOLAR_MOON_SPEED = 0.0036;
   const SOLAR_MOON_COLOR = "#d9d7ce";
 
-  // Asteroid belt (between Mars at 0.53 and Jupiter at 0.68).
-  const ASTEROID_INNER_RADIUS = 0.575;
-  const ASTEROID_OUTER_RADIUS = 0.645;
-  const ASTEROID_HEIGHT_VARIANCE = 0.012;
-  const ASTEROID_MIN_SIZE = 0.0035;
-  const ASTEROID_MAX_SIZE = 0.0085;
+  // Asteroid / debris belt count (the per-system geometry — radii, sizes,
+  // colors — lives inside the SYSTEMS map).
   const ASTEROID_COUNT_DESKTOP = 180;
   const ASTEROID_COUNT_MOBILE = 90;
-  const ASTEROID_MIN_SPEED = 0.00045;
-  const ASTEROID_MAX_SPEED = 0.0008;
-  const ASTEROID_COLOR = "#7d6e60";
 
   // True-scale toggle: when on, planets are scaled to their real diameter
-  // ratios using Earth's current visual size as 1.0. The Sun is scaled with a
+  // ratios using Earth's current visual size as 1.0. The star is scaled with a
   // gentle log compression so it stays inside the orbit view.
   const TRUE_SCALE_EARTH_BASE = 0.04;
-  const TRUE_SCALE_SUN_FACTOR = 8.5; // visually compressed (real ratio is 109)
 
   // Sun fact panel.
   const SOLAR_SUN_INFO = {
@@ -227,6 +109,145 @@
     moons: 0,
     info: "A G-type main-sequence star and the heart of the Solar System. ~99.86% of the system's mass; surface temperature ~5,500°C."
   };
+
+  // Tau Ceti System (G8V star ~12 light-years away with 4 confirmed super-Earths).
+  const TAU_CETI_PLANETS = [
+    { name: "Tau Ceti g", radius: 0.22, size: 0.028, realSize: 1.17, color: "#c97a4f",
+      texture: "tauCetiG", speed: 0.0022, spinSpeed: 0.003,
+      axialTilt: 0.18,
+      diameter: "~14,900 km (estimated)", yearLength: "20 Earth days", dayLength: "Unknown",
+      distance: "0.133 AU (~20 million km)", moons: 0,
+      info: "Innermost confirmed planet. A scorched super-Earth orbiting close to Tau Ceti." },
+    { name: "Tau Ceti h", radius: 0.34, size: 0.029, realSize: 1.19, color: "#b86045",
+      texture: "tauCetiH", speed: 0.0016, spinSpeed: 0.0028,
+      axialTilt: 0.22,
+      diameter: "~15,200 km (estimated)", yearLength: "49 Earth days", dayLength: "Unknown",
+      distance: "0.243 AU (~36 million km)", moons: 0,
+      info: "A warm super-Earth, just inside the inner edge of the habitable zone." },
+    { name: "Tau Ceti e", radius: 0.56, size: 0.046, realSize: 1.81, color: "#5e8fbf",
+      texture: "tauCetiE", speed: 0.0011, spinSpeed: 0.0024,
+      axialTilt: 0.4,
+      diameter: "~23,000 km (estimated)", yearLength: "168 Earth days", dayLength: "Unknown",
+      distance: "0.538 AU (~80 million km)", moons: 0,
+      info: "Inner habitable zone. Could host liquid water depending on its atmosphere." },
+    { name: "Tau Ceti f", radius: 0.92, size: 0.045, realSize: 1.83, color: "#7896b8",
+      texture: "tauCetiF", speed: 0.00048, spinSpeed: 0.0022,
+      axialTilt: 0.34,
+      diameter: "~23,300 km (estimated)", yearLength: "642 Earth days", dayLength: "Unknown",
+      distance: "1.334 AU (~200 million km)", moons: 0,
+      info: "Outer habitable zone. Likely cold, but with a thick atmosphere it could be habitable." }
+  ];
+  const TAU_CETI_STAR_INFO = {
+    name: "Tau Ceti",
+    diameter: "~1,098,000 km (0.79 solar radii)",
+    yearLength: "—",
+    dayLength: "~34 Earth days at equator",
+    distance: "Centre of system · 11.9 light-years from Earth",
+    moons: 0,
+    info: "A G8V yellow dwarf, slightly cooler and dimmer than the Sun. The closest solitary G-type star to Earth and a long-time SETI target."
+  };
+
+  // Project Hail Mary ships, stationed near Tau Ceti e (the habitable-zone
+  // planet they're studying in the book). Coordinates are static — the planets
+  // orbit past, the ships hold their position.
+  const TAU_CETI_SHIPS = [
+    {
+      name: "Hail Mary",
+      kind: "hailMary",
+      position: [-0.045, 0.045, 0.5],
+      pickRadius: 0.06,
+      info: {
+        name: "Hail Mary",
+        diameter: "~47 m long (with radiators)",
+        distance: "Stationed near Tau Ceti e",
+        info: "Earth's interstellar emergency mission, captained by Dr. Ryland Grace. A spin-drive ship powered by astrophage, with a centrifuge for artificial gravity and two big radiators to dump waste heat."
+      }
+    },
+    {
+      name: "Blip-A",
+      kind: "blipA",
+      position: [0.06, 0.06, 0.51],
+      pickRadius: 0.07,
+      info: {
+        name: "Blip-A",
+        diameter: "~210 m across (xenonite hull)",
+        distance: "Stationed near Tau Ceti e",
+        info: "An Eridian starship made of xenonite — far tougher than any human alloy. No windows: Eridians sense the world by sound. Crewed by Rocky, the engineer who befriends Grace."
+      }
+    }
+  ];
+
+  // System definitions consumed by the planetary-system component. Each entry
+  // describes the central star, its planets, and the surrounding debris ring.
+  const SYSTEMS = {
+    solar: {
+      foundText: "Solar System · tap a planet for info",
+      sceneScale: 0.62,
+      sceneYOffset: 0.18,
+      star: {
+        info: null, // filled below to break the circular reference at parse time
+        texture: "sun",
+        radius: 0.13,
+        emissive: "#ff8a00",
+        coronaColor: "#ffb04a",
+        coronaOpacity: 0.18,
+        ambientColor: 0x405070,
+        pointColor: 0xffd47a,
+        pointIntensity: 2.3,
+        pointDistance: 3.2,
+        trueScaleFactor: 8.5
+      },
+      planets: null,
+      asteroidBelt: {
+        innerRadius: 0.575,
+        outerRadius: 0.645,
+        heightVariance: 0.012,
+        minSize: 0.0035,
+        maxSize: 0.0085,
+        minSpeed: 0.00045,
+        maxSpeed: 0.0008,
+        color: "#7d6e60"
+      }
+    },
+    tauCeti: {
+      foundText: "Tau Ceti System · tap a planet for info",
+      sceneScale: 0.62,
+      sceneYOffset: 0.18,
+      star: {
+        info: null,
+        texture: "tauCetiStar",
+        radius: 0.115,
+        emissive: "#ff7a18",
+        coronaColor: "#ffb86b",
+        coronaOpacity: 0.2,
+        ambientColor: 0x4a4860,
+        pointColor: 0xffc680,
+        pointIntensity: 2.0,
+        pointDistance: 3.0,
+        trueScaleFactor: 6.7
+      },
+      planets: null,
+      // Tau Ceti has a debris disk with ~10× the dust of the Solar System,
+      // extending past the outermost planet.
+      asteroidBelt: {
+        innerRadius: 1.05,
+        outerRadius: 1.32,
+        heightVariance: 0.022,
+        minSize: 0.003,
+        maxSize: 0.0075,
+        minSpeed: 0.00035,
+        maxSpeed: 0.00065,
+        color: "#9a8b7a"
+      }
+    }
+  };
+  SYSTEMS.solar.star.info = SOLAR_SUN_INFO;
+  SYSTEMS.solar.planets = SOLAR_PLANETS;
+  SYSTEMS.solar.ships = [];
+  SYSTEMS.tauCeti.star.info = TAU_CETI_STAR_INFO;
+  SYSTEMS.tauCeti.planets = TAU_CETI_PLANETS;
+  SYSTEMS.tauCeti.ships = TAU_CETI_SHIPS;
+
   const SOLAR_SATURN_RING_INNER = 0.08;
   const SOLAR_SATURN_RING_OUTER = 0.12;
   const SOLAR_SATURN_RING_COLOR = "#f2db9d";
@@ -269,7 +290,6 @@
   const SUPPORTS_CAMERA = Boolean(navigator.mediaDevices && navigator.mediaDevices.getUserMedia && IS_CAMERA_SECURE_CONTEXT);
   const IS_SMALL_SCREEN = window.matchMedia(MOBILE_QUERY).matches;
   const IS_LOW_POWER = IS_SMALL_SCREEN || (navigator.hardwareConcurrency || LOW_POWER_CPU_CORES) <= LOW_POWER_CPU_CORES;
-  const PARTICLE_COUNT = IS_LOW_POWER ? MOBILE_PARTICLE_COUNT : DESKTOP_PARTICLE_COUNT;
   const DISK_SEGMENTS = IS_LOW_POWER ? MOBILE_SEGMENTS : DESKTOP_SEGMENTS;
   const SPHERE_SEGMENTS = IS_LOW_POWER ? MOBILE_SPHERE_SEGMENTS : DESKTOP_SPHERE_SEGMENTS;
   const SOLAR_STAR_COUNT = IS_LOW_POWER ? SOLAR_STAR_COUNT_MOBILE : SOLAR_STAR_COUNT_DESKTOP;
@@ -278,531 +298,15 @@
 
   const randomBetween = (min, max) => min + Math.random() * (max - min);
 
-  AFRAME.registerComponent("blackhole-scene", {
-    init: function () {
-      this.three = AFRAME.THREE;
-      this.modeIndex = 0;
-      this.particles = [];
-      this.disposables = [];
-      this.hudTimer = null;
-      this.tempObject = new this.three.Object3D();
-      this.tempColor = new this.three.Color();
-
-      // The root group lifts and scales the entire visualizer above the Hiro marker.
-      this.root = new this.three.Group();
-      this.root.position.y = SCENE_Y_OFFSET;
-      this.root.scale.setScalar(SCENE_SCALE);
-      this.el.object3D.add(this.root);
-
-      this.setupUi();
-      this.bindMarkerEvents();
-      this.createLights();
-      this.createSingularity();
-      this.createAccretionDisk();
-      this.createParticleField();
-      this.createParticleTrails();
-      this.createGlowHalo();
-      this.createLensShell();
-      this.createPolarJets();
-    },
-
-    setupUi: function () {
-      this.hud = document.getElementById(HUD_ID);
-      this.modeButton = document.getElementById(MODE_BUTTON_ID);
-
-      if (this.modeButton) {
-        this.modeButton.textContent = MODES[this.modeIndex].name;
-        this.onModeClick = this.cycleMode.bind(this);
-        this.modeButton.addEventListener("click", this.onModeClick);
-      }
-
-      if (!SUPPORTS_CAMERA) {
-        this.showSupportMessage();
-      }
-    },
-
-    bindMarkerEvents: function () {
-      this.marker = this.el.closest("a-marker");
-
-      if (!this.marker) {
-        return;
-      }
-
-      this.onMarkerFound = () => {
-        this.setHud(`${HUD_FOUND_BLACKHOLE_TEXT} · ${MODES[this.modeIndex].name}`, true);
-      };
-      this.onMarkerLost = () => {
-        this.setHud(HUD_LOST_TEXT, false);
-      };
-
-      this.marker.addEventListener("markerFound", this.onMarkerFound);
-      this.marker.addEventListener("markerLost", this.onMarkerLost);
-    },
-
-    createLights: function () {
-      // A little local light keeps the dark-purple sphere readable in AR.
-      const ambient = new this.three.AmbientLight(0x50346f, 0.9);
-      const point = new this.three.PointLight(0xffa34d, 1.6, 2.4);
-      point.position.set(0.18, 0.45, 0.28);
-
-      this.root.add(ambient);
-      this.root.add(point);
-    },
-
-    createSingularity: function () {
-      // The central black hole is intentionally almost black with a faint purple emission.
-      const geometry = this.track(new this.three.SphereGeometry(SINGULARITY_RADIUS, SPHERE_SEGMENTS, SPHERE_SEGMENTS));
-      const material = this.track(new this.three.MeshStandardMaterial({
-        color: SINGULARITY_COLOR,
-        emissive: SINGULARITY_EMISSIVE,
-        emissiveIntensity: 0.75,
-        roughness: 0.35,
-        metalness: 0.15
-      }));
-
-      this.singularity = new this.three.Mesh(geometry, material);
-      this.root.add(this.singularity);
-    },
-
-    createAccretionDisk: function () {
-      // Two textured disk layers rotate at different speeds for turbulent, shearing motion.
-      this.innerDisk = this.createDiskLayer(
-        DISK_INNER_RADIUS,
-        DISK_MIDDLE_RADIUS,
-        this.createDiskTexture("inner"),
-        DISK_INNER_OPACITY
-      );
-      this.outerDisk = this.createDiskLayer(
-        DISK_MIDDLE_RADIUS * DISK_OVERLAP_SCALE,
-        DISK_OUTER_RADIUS,
-        this.createDiskTexture("outer"),
-        DISK_OUTER_OPACITY
-      );
-
-      this.diskGlow = this.createDiskLayer(
-        DISK_INNER_RADIUS * DISK_GLOW_INNER_SCALE,
-        DISK_OUTER_RADIUS * DISK_GLOW_OUTER_SCALE,
-        this.createDiskTexture("glow"),
-        DISK_GLOW_OPACITY
-      );
-
-      this.root.add(this.diskGlow, this.outerDisk, this.innerDisk);
-    },
-
-    createDiskLayer: function (innerRadius, outerRadius, texture, opacity) {
-      const geometry = this.track(new this.three.RingGeometry(innerRadius, outerRadius, DISK_SEGMENTS, 4));
-      const material = this.track(new this.three.MeshBasicMaterial({
-        map: this.track(texture),
-        side: this.three.DoubleSide,
-        transparent: true,
-        opacity,
-        blending: this.three.AdditiveBlending,
-        depthWrite: false
-      }));
-      const disk = new this.three.Mesh(geometry, material);
-
-      disk.rotation.x = this.three.MathUtils.degToRad(DISK_TILT_X);
-      disk.rotation.z = this.three.MathUtils.degToRad(DISK_TILT_Z);
-
-      return disk;
-    },
-
-    createDiskTexture: function (variant) {
-      // Canvas textures avoid extra image files while giving the disk a noisy, plasma-like surface.
-      const canvas = document.createElement("canvas");
-      const context = canvas.getContext("2d");
-      const center = DISK_TEXTURE_SIZE / 2;
-      const hotStop = variant === "outer" ? DISK_TEXTURE_OUTER_HOT_STOP : DISK_TEXTURE_INNER_HOT_STOP;
-      const middleStop = variant === "outer" ? DISK_TEXTURE_OUTER_MIDDLE_STOP : DISK_TEXTURE_INNER_MIDDLE_STOP;
-      const edgeOpacity = variant === "glow" ? DISK_TEXTURE_GLOW_EDGE_OPACITY : 0;
-
-      canvas.width = DISK_TEXTURE_SIZE;
-      canvas.height = DISK_TEXTURE_SIZE;
-      context.clearRect(0, 0, DISK_TEXTURE_SIZE, DISK_TEXTURE_SIZE);
-
-      const gradient = context.createRadialGradient(center, center, DISK_TEXTURE_CENTER_RADIUS, center, center, center);
-      gradient.addColorStop(0, DISK_COLOR_HOT);
-      gradient.addColorStop(hotStop, DISK_COLOR_INNER);
-      gradient.addColorStop(middleStop, DISK_COLOR_MIDDLE);
-      gradient.addColorStop(DISK_TEXTURE_OUTER_COLOR_STOP, DISK_COLOR_OUTER);
-      gradient.addColorStop(1, `rgba(184, 65, 3, ${edgeOpacity})`);
-
-      context.fillStyle = gradient;
-      context.fillRect(0, 0, DISK_TEXTURE_SIZE, DISK_TEXTURE_SIZE);
-      context.globalCompositeOperation = "screen";
-
-      for (let i = 0; i < DISK_TEXTURE_STREAKS; i += 1) {
-        const radius = randomBetween(center * DISK_TEXTURE_STREAK_MIN_RADIUS, center * DISK_TEXTURE_STREAK_MAX_RADIUS);
-        const angle = randomBetween(0, TWO_PI);
-        const length = randomBetween(DISK_TEXTURE_STREAK_MIN_LENGTH, DISK_TEXTURE_STREAK_MAX_LENGTH);
-        const brightness = randomBetween(DISK_TEXTURE_STREAK_MIN_ALPHA, DISK_TEXTURE_STREAK_MAX_ALPHA);
-
-        context.beginPath();
-        context.arc(center, center, radius, angle, angle + length);
-        context.strokeStyle = `rgba(255, ${Math.floor(randomBetween(DISK_TEXTURE_STREAK_MIN_GREEN, DISK_TEXTURE_STREAK_MAX_GREEN))}, ${DISK_TEXTURE_STREAK_BLUE}, ${brightness})`;
-        context.lineWidth = randomBetween(DISK_TEXTURE_STREAK_MIN_WIDTH, DISK_TEXTURE_STREAK_MAX_WIDTH);
-        context.stroke();
-      }
-
-      context.globalCompositeOperation = "destination-in";
-      const fade = context.createRadialGradient(center, center, center * DISK_TEXTURE_FADE_INNER, center, center, center);
-      fade.addColorStop(0, "rgba(255, 255, 255, 1)");
-      fade.addColorStop(DISK_TEXTURE_FADE_MIDDLE, `rgba(255, 255, 255, ${DISK_TEXTURE_FADE_MIDDLE_ALPHA})`);
-      fade.addColorStop(1, "rgba(255, 255, 255, 0)");
-      context.fillStyle = fade;
-      context.fillRect(0, 0, DISK_TEXTURE_SIZE, DISK_TEXTURE_SIZE);
-      context.globalCompositeOperation = "source-over";
-
-      const texture = new this.three.CanvasTexture(canvas);
-      if (this.three.SRGBColorSpace) {
-        texture.colorSpace = this.three.SRGBColorSpace;
-      } else {
-        texture.encoding = this.three.sRGBEncoding;
-      }
-      texture.needsUpdate = true;
-
-      return texture;
-    },
-
-    createParticleField: function () {
-      // Instanced particles are much cheaper than dozens of separate sphere meshes on mobile AR.
-      const geometry = this.track(new this.three.SphereGeometry(1, 10, 10));
-      const bandCounts = this.getParticleBandCounts();
-
-      this.particleMeshes = PARTICLE_OPACITY_BANDS.map((opacity, band) => {
-        const material = this.track(new this.three.MeshBasicMaterial({
-          transparent: true,
-          opacity,
-          blending: this.three.AdditiveBlending,
-          depthWrite: false,
-          vertexColors: true
-        }));
-        const mesh = new this.three.InstancedMesh(geometry, material, bandCounts[band]);
-        mesh.instanceMatrix.setUsage(this.three.DynamicDrawUsage);
-        this.root.add(mesh);
-
-        return mesh;
-      });
-
-      const bandIndexes = PARTICLE_OPACITY_BANDS.map(() => 0);
-
-      for (let i = 0; i < PARTICLE_COUNT; i += 1) {
-        const band = i % PARTICLE_OPACITY_BANDS.length;
-        const instanceIndex = bandIndexes[band];
-        const color = PARTICLE_COLORS[i % PARTICLE_COLORS.length];
-
-        this.particleMeshes[band].setColorAt(instanceIndex, this.tempColor.set(color));
-        this.particles.push(this.createParticleState(band, instanceIndex, color));
-        bandIndexes[band] += 1;
-      }
-
-      for (const mesh of this.particleMeshes) {
-        if (mesh.instanceColor) {
-          mesh.instanceColor.needsUpdate = true;
-        }
-      }
-    },
-
-    createParticleTrails: function () {
-      // Faded trailing instances make the particles read as spiraling infall instead of simple dots.
-      const geometry = this.track(new this.three.SphereGeometry(1, 8, 8));
-      const bandCounts = this.getParticleBandCounts();
-
-      this.trailMeshes = PARTICLE_OPACITY_BANDS.map((opacity, band) => {
-        return Array.from({ length: TRAIL_STEPS }, (_, step) => {
-          const material = this.track(new this.three.MeshBasicMaterial({
-            transparent: true,
-            opacity: TRAIL_OPACITY_BASE * opacity * (1 - step / (TRAIL_STEPS + 1)),
-            blending: this.three.AdditiveBlending,
-            depthWrite: false,
-            vertexColors: true
-          }));
-          const mesh = new this.three.InstancedMesh(geometry, material, bandCounts[band]);
-          mesh.instanceMatrix.setUsage(this.three.DynamicDrawUsage);
-          this.root.add(mesh);
-
-          return mesh;
-        });
-      });
-
-      for (const particle of this.particles) {
-        for (let step = 0; step < TRAIL_STEPS; step += 1) {
-          this.trailMeshes[particle.band][step].setColorAt(particle.instanceIndex, this.tempColor.set(particle.color));
-        }
-      }
-
-      for (const band of this.trailMeshes) {
-        for (const mesh of band) {
-          if (mesh.instanceColor) {
-            mesh.instanceColor.needsUpdate = true;
-          }
-        }
-      }
-    },
-
-    createParticleState: function (band, instanceIndex, color) {
-      return {
-        band,
-        instanceIndex,
-        color,
-        angle: randomBetween(0, TWO_PI),
-        radius: randomBetween(PARTICLE_MIN_RADIUS, PARTICLE_MAX_RADIUS),
-        speed: randomBetween(PARTICLE_MIN_SPEED, PARTICLE_MAX_SPEED),
-        drain: randomBetween(PARTICLE_MIN_DRAIN, PARTICLE_MAX_DRAIN),
-        size: randomBetween(PARTICLE_MIN_SIZE, PARTICLE_MAX_SIZE),
-        tilt: this.three.MathUtils.degToRad(randomBetween(PARTICLE_TILT_MIN, PARTICLE_TILT_MAX)),
-        wobblePhase: randomBetween(0, TWO_PI),
-        wobbleSpeed: randomBetween(0.001, 0.0025)
-      };
-    },
-
-    getParticleBandCounts: function () {
-      return PARTICLE_OPACITY_BANDS.map((_, band) => {
-        let count = 0;
-
-        for (let i = 0; i < PARTICLE_COUNT; i += 1) {
-          if (i % PARTICLE_OPACITY_BANDS.length === band) {
-            count += 1;
-          }
-        }
-
-        return count;
-      });
-    },
-
-    createGlowHalo: function () {
-      // The soft purple/blue halo is a transparent additive sphere surrounding the singularity.
-      const geometry = this.track(new this.three.SphereGeometry(HALO_RADIUS, SPHERE_SEGMENTS, SPHERE_SEGMENTS));
-      const material = this.track(new this.three.MeshBasicMaterial({
-        color: HALO_COLOR,
-        transparent: true,
-        opacity: HALO_OPACITY,
-        blending: this.three.AdditiveBlending,
-        depthWrite: false
-      }));
-
-      this.halo = new this.three.Mesh(geometry, material);
-      this.root.add(this.halo);
-    },
-
-    createLensShell: function () {
-      // Layered transparent shells and rings suggest gravitational lensing without debug-like wireframes.
-      const shellGeometry = this.track(new this.three.SphereGeometry(LENS_RADIUS, SPHERE_SEGMENTS, SPHERE_SEGMENTS));
-      const shellMaterial = this.track(new this.three.MeshBasicMaterial({
-        color: LENS_COLOR,
-        side: this.three.BackSide,
-        transparent: true,
-        opacity: LENS_OPACITY,
-        blending: this.three.AdditiveBlending,
-        depthWrite: false
-      }));
-      const ringMaterial = this.track(new this.three.MeshBasicMaterial({
-        color: LENS_COLOR,
-        transparent: true,
-        opacity: LENS_RING_OPACITY,
-        blending: this.three.AdditiveBlending,
-        depthWrite: false
-      }));
-      const ringGeometry = this.track(new this.three.TorusGeometry(LENS_RADIUS * 0.72, 0.006, 8, DISK_SEGMENTS));
-
-      this.lensShell = new this.three.Mesh(shellGeometry, shellMaterial);
-      this.lensShell.scale.set(1, 0.62, 1);
-
-      this.lensRingA = new this.three.Mesh(ringGeometry, ringMaterial);
-      this.lensRingB = new this.three.Mesh(ringGeometry, ringMaterial.clone());
-      this.track(this.lensRingB.material);
-      this.lensRingA.rotation.x = this.three.MathUtils.degToRad(74);
-      this.lensRingB.rotation.x = this.three.MathUtils.degToRad(106);
-      this.lensRingB.rotation.z = this.three.MathUtils.degToRad(31);
-
-      this.root.add(this.lensShell, this.lensRingA, this.lensRingB);
-    },
-
-    createPolarJets: function () {
-      // Faint polar jets add an astrophysical detail while staying subtle enough for marker AR.
-      const geometry = this.track(new this.three.ConeGeometry(JET_RADIUS, JET_HEIGHT, 32, 1, true));
-      const material = this.track(new this.three.MeshBasicMaterial({
-        color: JET_COLOR,
-        transparent: true,
-        opacity: JET_OPACITY,
-        blending: this.three.AdditiveBlending,
-        depthWrite: false,
-        side: this.three.DoubleSide
-      }));
-
-      this.jetTop = new this.three.Mesh(geometry, material);
-      this.jetBottom = new this.three.Mesh(geometry, material.clone());
-      this.track(this.jetBottom.material);
-      this.jetTop.position.y = JET_HEIGHT / 2;
-      this.jetBottom.position.y = -JET_HEIGHT / 2;
-      this.jetBottom.rotation.z = Math.PI;
-      this.root.add(this.jetTop, this.jetBottom);
-    },
-
-    tick: function (time, delta) {
-      const dt = delta || DEFAULT_DELTA_MS;
-      const mode = MODES[this.modeIndex];
-
-      this.updateSingularityPulse(time, mode);
-      this.updateDisk(dt, mode);
-      this.updateParticles(dt, time, mode);
-      this.updateLensShell(dt, mode);
-      this.updateJets(time, mode);
-    },
-
-    updateSingularityPulse: function (time, mode) {
-      // Subtle breathing keeps the center alive without breaking the illusion of mass.
-      const pulse = 1 + Math.sin(time * SINGULARITY_PULSE_SPEED) * SINGULARITY_PULSE_AMOUNT;
-      this.singularity.scale.setScalar(pulse);
-      this.halo.scale.setScalar((1 + (pulse - 1) * 1.9) * mode.glow);
-      this.halo.material.opacity = HALO_OPACITY * mode.glow;
-    },
-
-    updateDisk: function (delta, mode) {
-      this.innerDisk.rotation.y += delta * DISK_ROTATION_SPEED_INNER * mode.disk;
-      this.outerDisk.rotation.y -= delta * DISK_ROTATION_SPEED_OUTER * mode.disk;
-      this.diskGlow.rotation.y += delta * DISK_GLOW_ROTATION_SPEED * mode.disk;
-      this.diskGlow.material.opacity = DISK_GLOW_OPACITY * mode.glow;
-    },
-
-    updateParticles: function (delta, time, mode) {
-      for (const particle of this.particles) {
-        particle.angle += delta * particle.speed * mode.particles;
-        particle.radius -= delta * particle.drain * mode.gravity;
-
-        if (particle.radius < PARTICLE_RESET_RADIUS) {
-          particle.radius = PARTICLE_MAX_RADIUS;
-          particle.angle = randomBetween(0, TWO_PI);
-        }
-
-        this.writeParticleInstance(particle, particle.angle, particle.radius, particle.size, time);
-
-        for (let step = 0; step < TRAIL_STEPS; step += 1) {
-          const trailAngle = particle.angle - (step + 1) * TRAIL_ANGLE_GAP;
-          const trailRadius = Math.min(PARTICLE_MAX_RADIUS, particle.radius + (step + 1) * TRAIL_RADIUS_GAP);
-          const trailSize = particle.size * Math.pow(TRAIL_SIZE_FADE, step + 1);
-
-          this.writeTrailInstance(particle, step, trailAngle, trailRadius, trailSize, time);
-        }
-      }
-
-      for (const mesh of this.particleMeshes) {
-        mesh.instanceMatrix.needsUpdate = true;
-      }
-
-      for (const band of this.trailMeshes) {
-        for (const mesh of band) {
-          mesh.instanceMatrix.needsUpdate = true;
-        }
-      }
-    },
-
-    writeParticleInstance: function (particle, angle, radius, size, time) {
-      const twinkle = PARTICLE_TWINKLE_BASE + Math.sin(time * PARTICLE_TWINKLE_SPEED + particle.wobblePhase) * PARTICLE_TWINKLE_AMOUNT;
-
-      this.setOrbitPosition(this.tempObject.position, particle, angle, radius, time);
-      this.tempObject.scale.setScalar(size * twinkle);
-      this.tempObject.updateMatrix();
-      this.particleMeshes[particle.band].setMatrixAt(particle.instanceIndex, this.tempObject.matrix);
-    },
-
-    writeTrailInstance: function (particle, step, angle, radius, size, time) {
-      this.setOrbitPosition(this.tempObject.position, particle, angle, radius, time);
-      this.tempObject.scale.setScalar(size);
-      this.tempObject.updateMatrix();
-      this.trailMeshes[particle.band][step].setMatrixAt(particle.instanceIndex, this.tempObject.matrix);
-    },
-
-    setOrbitPosition: function (target, particle, angle, radius, time) {
-      const x = Math.cos(angle) * radius;
-      const z = Math.sin(angle) * radius;
-      const wobble = Math.sin(time * particle.wobbleSpeed + particle.wobblePhase) * PARTICLE_VERTICAL_WOBBLE;
-      const tilt = Math.sin(angle) * Math.sin(particle.tilt) * PARTICLE_TILT_AMOUNT;
-
-      target.set(x, wobble + tilt, z);
-    },
-
-    updateLensShell: function (delta, mode) {
-      this.lensShell.rotation.y += delta * LENS_ROTATION_SPEED * mode.disk;
-      this.lensShell.rotation.x += delta * LENS_ROTATION_SPEED * 0.35 * mode.disk;
-      this.lensRingA.rotation.y -= delta * LENS_ROTATION_SPEED * 1.8 * mode.disk;
-      this.lensRingB.rotation.y += delta * LENS_ROTATION_SPEED * 1.4 * mode.disk;
-    },
-
-    updateJets: function (time, mode) {
-      const pulse = 1 + Math.sin(time * JET_PULSE_SPEED) * JET_PULSE_AMOUNT;
-      const opacity = JET_OPACITY * mode.glow;
-
-      this.jetTop.scale.set(pulse, 1, pulse);
-      this.jetBottom.scale.set(pulse, 1, pulse);
-      this.jetTop.material.opacity = opacity;
-      this.jetBottom.material.opacity = opacity;
-    },
-
-    cycleMode: function () {
-      this.modeIndex = (this.modeIndex + 1) % MODES.length;
-      this.modeButton.textContent = MODES[this.modeIndex].name;
-      this.setHud(`Mode: ${MODES[this.modeIndex].name}`, true);
-    },
-
-    setHud: function (message, autoHide) {
-      if (!this.hud) {
-        return;
-      }
-
-      window.clearTimeout(this.hudTimer);
-      this.hud.textContent = message || HUD_DEFAULT_TEXT;
-      this.hud.classList.remove(HUD_HIDDEN_CLASS);
-
-      if (autoHide) {
-        this.hudTimer = window.setTimeout(() => {
-          this.hud.classList.add(HUD_HIDDEN_CLASS);
-        }, HUD_HIDE_DELAY_MS);
-      }
-    },
-
-    showSupportMessage: function () {
-      const message = document.createElement("div");
-      message.className = "support-message";
-      message.textContent = SUPPORT_MESSAGE_TEXT;
-      document.body.appendChild(message);
-      this.supportMessage = message;
-    },
-
-    track: function (resource) {
-      this.disposables.push(resource);
-      return resource;
-    },
-
-    remove: function () {
-      window.clearTimeout(this.hudTimer);
-
-      if (this.modeButton && this.onModeClick) {
-        this.modeButton.removeEventListener("click", this.onModeClick);
-      }
-
-      if (this.marker) {
-        this.marker.removeEventListener("markerFound", this.onMarkerFound);
-        this.marker.removeEventListener("markerLost", this.onMarkerLost);
-      }
-
-      if (this.supportMessage) {
-        this.supportMessage.remove();
-      }
-
-      this.el.object3D.remove(this.root);
-
-      for (const resource of this.disposables) {
-        if (resource && typeof resource.dispose === "function") {
-          resource.dispose();
-        }
-      }
-    }
-  });
 
   AFRAME.registerComponent("solar-system-scene", {
+    schema: {
+      // Pick which planetary system this marker shows. Defined in SYSTEMS above.
+      system: { type: "string", default: "solar" }
+    },
     init: function () {
       this.three = AFRAME.THREE;
+      this.systemDef = SYSTEMS[this.data.system] || SYSTEMS.solar;
       this.planets = [];
       this.pickTargets = [];
       this.disposables = [];
@@ -810,10 +314,10 @@
       this.tmpCamPos = new this.three.Vector3();
       this.tmpRootPos = new this.three.Vector3();
 
-      // The solar system gets its own compact scale so Neptune still fits above the marker.
+      // Each system gets its own compact scale so the outermost planet fits above the marker.
       this.root = new this.three.Group();
-      this.root.position.y = SOLAR_SCENE_Y_OFFSET;
-      this.root.scale.setScalar(SOLAR_SCENE_SCALE);
+      this.root.position.y = this.systemDef.sceneYOffset;
+      this.root.scale.setScalar(this.systemDef.sceneScale);
       this.el.object3D.add(this.root);
 
       // Runtime state for the kid-facing controls. These are mutated by the
@@ -830,6 +334,7 @@
       this.createSun();
       this.createOrbitingPlanets();
       this.createAsteroidBelt();
+      this.createShips();
       this.createStarField();
       this.bindMarkerEvents();
       this.setupInfoPanel();
@@ -838,35 +343,37 @@
     },
 
     createLights: function () {
-      const ambient = new this.three.AmbientLight(0x405070, 0.9);
-      const sunLight = new this.three.PointLight(0xffd47a, 2.3, 3.2);
+      const star = this.systemDef.star;
+      const ambient = new this.three.AmbientLight(star.ambientColor, 0.9);
+      const sunLight = new this.three.PointLight(star.pointColor, star.pointIntensity, star.pointDistance);
 
       sunLight.position.set(0, 0.18, 0);
       this.root.add(ambient, sunLight);
     },
 
     createSun: function () {
-      // The Sun gets a swirling procedural surface, an emissive material, and
-      // an outer corona shell so it reads as a bright body even in AR.
-      const geometry = this.track(new this.three.SphereGeometry(SOLAR_SUN_RADIUS, SPHERE_SEGMENTS, SPHERE_SEGMENTS));
-      const sunTexture = this.createPlanetTexture("sun");
+      // The central star gets a swirling procedural surface, an emissive
+      // material, and an outer corona shell so it reads as a bright body in AR.
+      const star = this.systemDef.star;
+      const geometry = this.track(new this.three.SphereGeometry(star.radius, SPHERE_SEGMENTS, SPHERE_SEGMENTS));
+      const sunTexture = this.createPlanetTexture(star.texture);
       const material = this.track(new this.three.MeshStandardMaterial({
         map: sunTexture,
-        emissive: SOLAR_SUN_EMISSIVE,
+        emissive: star.emissive,
         emissiveMap: sunTexture,
         emissiveIntensity: 1.4,
         roughness: 0.45
       }));
 
       this.sun = new this.three.Mesh(geometry, material);
-      this.sunState = { mesh: this.sun, data: SOLAR_SUN_INFO };
+      this.sunState = { mesh: this.sun, data: star.info };
       this.sun.userData.planetState = this.sunState;
 
-      const coronaGeometry = this.track(new this.three.SphereGeometry(SOLAR_SUN_RADIUS * 1.35, SPHERE_SEGMENTS, SPHERE_SEGMENTS));
+      const coronaGeometry = this.track(new this.three.SphereGeometry(star.radius * 1.35, SPHERE_SEGMENTS, SPHERE_SEGMENTS));
       const coronaMaterial = this.track(new this.three.MeshBasicMaterial({
-        color: "#ffb04a",
+        color: star.coronaColor,
         transparent: true,
-        opacity: 0.18,
+        opacity: star.coronaOpacity,
         blending: this.three.AdditiveBlending,
         depthWrite: false,
         side: this.three.BackSide
@@ -874,7 +381,7 @@
       this.sunCorona = new this.three.Mesh(coronaGeometry, coronaMaterial);
       this.sun.add(this.sunCorona);
 
-      const sunPickRadius = Math.max(SOLAR_SUN_RADIUS * PLANET_PICK_TARGET_SCALE, PLANET_PICK_TARGET_MIN_SIZE);
+      const sunPickRadius = Math.max(star.radius * PLANET_PICK_TARGET_SCALE, PLANET_PICK_TARGET_MIN_SIZE);
       const sunPickGeometry = this.track(new this.three.SphereGeometry(sunPickRadius, PLANET_PICK_TARGET_SEGMENTS, PLANET_PICK_TARGET_SEGMENTS));
       const sunPickMaterial = this.track(new this.three.MeshBasicMaterial({
         transparent: true,
@@ -882,7 +389,7 @@
         depthWrite: false
       }));
       this.sunPickTarget = new this.three.Mesh(sunPickGeometry, sunPickMaterial);
-      this.sunPickTarget.name = "Sun pick target";
+      this.sunPickTarget.name = `${this.systemDef.star.info.name} pick target`;
       this.sunPickTarget.userData.planetState = this.sunState;
       this.sun.add(this.sunPickTarget);
 
@@ -891,7 +398,7 @@
 
     createOrbitingPlanets: function () {
       this.orbitRings = [];
-      for (const planetData of SOLAR_PLANETS) {
+      for (const planetData of this.systemDef.planets) {
         const orbit = this.createOrbitRing(planetData.radius);
         const orbitGroup = new this.three.Group();
 
@@ -1274,6 +781,136 @@
           }
           break;
         }
+        case "tauCetiStar": {
+          // Tau Ceti is G8V — a touch cooler and more amber than the Sun.
+          const grad = ctx.createRadialGradient(width / 2, height / 2, 18, width / 2, height / 2, height);
+          grad.addColorStop(0, "#fff0b8");
+          grad.addColorStop(0.4, "#ffba50");
+          grad.addColorStop(1, "#e0631a");
+          ctx.fillStyle = grad;
+          ctx.fillRect(0, 0, width, height);
+          for (let i = 0; i < 220; i += 1) {
+            const x = Math.random() * width;
+            const y = Math.random() * height;
+            const r = randomBetween(2, 13);
+            ctx.fillStyle = `rgba(255, ${160 + Math.random() * 60 | 0}, 50, ${0.15 + Math.random() * 0.32})`;
+            ctx.beginPath();
+            ctx.arc(x, y, r, 0, TWO_PI);
+            ctx.fill();
+          }
+          for (let i = 0; i < 12; i += 1) {
+            ctx.fillStyle = "rgba(110, 30, 0, 0.55)";
+            ctx.beginPath();
+            ctx.arc(Math.random() * width, Math.random() * height, randomBetween(2, 5), 0, TWO_PI);
+            ctx.fill();
+          }
+          break;
+        }
+        case "tauCetiG": {
+          // Innermost: scorched, lava-streaked super-Earth.
+          horizontalBands([[0, "#7a3520"], [0.5, "#c97a4f"], [1, "#5e2613"]]);
+          for (let i = 0; i < 280; i += 1) {
+            ctx.fillStyle = `rgba(${180 + Math.random() * 60 | 0}, ${60 + Math.random() * 40 | 0}, 20, ${randomBetween(0.2, 0.5)})`;
+            ctx.beginPath();
+            ctx.arc(Math.random() * width, Math.random() * height, randomBetween(1.5, 5), 0, TWO_PI);
+            ctx.fill();
+          }
+          // A few bright lava cracks.
+          for (let i = 0; i < 24; i += 1) {
+            ctx.strokeStyle = `rgba(255, 180, 60, ${randomBetween(0.4, 0.8)})`;
+            ctx.lineWidth = randomBetween(1, 2.5);
+            ctx.beginPath();
+            const sx = Math.random() * width;
+            const sy = Math.random() * height;
+            ctx.moveTo(sx, sy);
+            ctx.lineTo(sx + randomBetween(-30, 30), sy + randomBetween(-12, 12));
+            ctx.stroke();
+          }
+          break;
+        }
+        case "tauCetiH": {
+          // Warm super-Earth with rocky cratering.
+          horizontalBands([[0, "#8a3d28"], [0.5, "#b86045"], [1, "#6e2c1e"]]);
+          for (let i = 0; i < 260; i += 1) {
+            const r = randomBetween(1.5, 5.5);
+            const x = Math.random() * width;
+            const y = Math.random() * height;
+            ctx.fillStyle = `rgba(50, 22, 14, ${randomBetween(0.25, 0.55)})`;
+            ctx.beginPath();
+            ctx.arc(x, y, r, 0, TWO_PI);
+            ctx.fill();
+            ctx.fillStyle = `rgba(220, 170, 140, ${randomBetween(0.15, 0.3)})`;
+            ctx.beginPath();
+            ctx.arc(x - r * 0.4, y - r * 0.4, r * 0.4, 0, TWO_PI);
+            ctx.fill();
+          }
+          break;
+        }
+        case "tauCetiE": {
+          // Inner-habitable-zone super-Earth — possible oceans + landmasses.
+          horizontalBands([[0, "#264e84"], [0.5, "#5e8fbf"], [1, "#1f3f6a"]]);
+          ctx.fillStyle = "#5b8a4a";
+          for (let i = 0; i < 12; i += 1) {
+            const cx = Math.random() * width;
+            const cy = randomBetween(height * 0.2, height * 0.8);
+            ctx.beginPath();
+            const points = 9;
+            for (let j = 0; j <= points; j += 1) {
+              const a = (j / points) * TWO_PI;
+              const r = randomBetween(10, 36);
+              const x = cx + Math.cos(a) * r;
+              const y = cy + Math.sin(a) * r * 0.55;
+              if (j === 0) ctx.moveTo(x, y); else ctx.lineTo(x, y);
+            }
+            ctx.closePath();
+            ctx.fill();
+          }
+          // Sparse polar ice (warm planet, only thin caps).
+          ctx.fillStyle = "rgba(255,255,255,0.7)";
+          ctx.fillRect(0, 0, width, 6);
+          ctx.fillRect(0, height - 6, width, 6);
+          // Cloud wisps.
+          for (let i = 0; i < 50; i += 1) {
+            ctx.fillStyle = `rgba(255,255,255,${randomBetween(0.18, 0.45)})`;
+            ctx.beginPath();
+            ctx.ellipse(Math.random() * width, Math.random() * height, randomBetween(8, 26), randomBetween(2, 5), Math.random() * Math.PI, 0, TWO_PI);
+            ctx.fill();
+          }
+          break;
+        }
+        case "tauCetiF": {
+          // Outer-habitable-zone super-Earth — colder, slate-blue with thicker ice.
+          horizontalBands([[0, "#3e5878"], [0.5, "#7896b8"], [1, "#2a3e5a"]]);
+          // Thicker polar caps.
+          ctx.fillStyle = "rgba(232, 240, 255, 0.92)";
+          ctx.fillRect(0, 0, width, 18);
+          ctx.fillRect(0, height - 18, width, 18);
+          // Faint frozen continents.
+          ctx.fillStyle = "rgba(180, 195, 215, 0.55)";
+          for (let i = 0; i < 10; i += 1) {
+            const cx = Math.random() * width;
+            const cy = randomBetween(height * 0.25, height * 0.75);
+            ctx.beginPath();
+            const points = 8;
+            for (let j = 0; j <= points; j += 1) {
+              const a = (j / points) * TWO_PI;
+              const r = randomBetween(8, 28);
+              const x = cx + Math.cos(a) * r;
+              const y = cy + Math.sin(a) * r * 0.6;
+              if (j === 0) ctx.moveTo(x, y); else ctx.lineTo(x, y);
+            }
+            ctx.closePath();
+            ctx.fill();
+          }
+          // High thin clouds.
+          for (let i = 0; i < 40; i += 1) {
+            ctx.fillStyle = `rgba(220, 235, 255, ${randomBetween(0.14, 0.34)})`;
+            ctx.beginPath();
+            ctx.ellipse(Math.random() * width, Math.random() * height, randomBetween(10, 28), randomBetween(2, 5), Math.random() * Math.PI, 0, TWO_PI);
+            ctx.fill();
+          }
+          break;
+        }
         default:
           ctx.fillStyle = "#888";
           ctx.fillRect(0, 0, width, height);
@@ -1293,12 +930,13 @@
     },
 
     createAsteroidBelt: function () {
-      // A ring of small instanced rocks between Mars and Jupiter. Each one
-      // gets its own orbit radius and angular speed so the belt drifts and
-      // shears realistically rather than rotating as a rigid block.
+      // A ring of small instanced rocks. In the Solar System this is the
+      // main belt between Mars and Jupiter; in Tau Ceti this becomes the
+      // dusty debris disk that lies just outside the outermost planet.
+      const belt = this.systemDef.asteroidBelt;
       const geometry = this.track(new this.three.SphereGeometry(1, 6, 6));
       const material = this.track(new this.three.MeshStandardMaterial({
-        color: ASTEROID_COLOR,
+        color: belt.color,
         roughness: 0.95,
         metalness: 0.02
       }));
@@ -1309,14 +947,274 @@
       for (let i = 0; i < ASTEROID_COUNT; i += 1) {
         this.asteroids.push({
           angle: randomBetween(0, TWO_PI),
-          radius: randomBetween(ASTEROID_INNER_RADIUS, ASTEROID_OUTER_RADIUS),
-          height: randomBetween(-ASTEROID_HEIGHT_VARIANCE, ASTEROID_HEIGHT_VARIANCE),
-          size: randomBetween(ASTEROID_MIN_SIZE, ASTEROID_MAX_SIZE),
-          speed: randomBetween(ASTEROID_MIN_SPEED, ASTEROID_MAX_SPEED)
+          radius: randomBetween(belt.innerRadius, belt.outerRadius),
+          height: randomBetween(-belt.heightVariance, belt.heightVariance),
+          size: randomBetween(belt.minSize, belt.maxSize),
+          speed: randomBetween(belt.minSpeed, belt.maxSpeed)
         });
       }
       this.asteroidMesh = mesh;
       this.root.add(mesh);
+    },
+
+    createShips: function () {
+      // Story-driven extras: in Tau Ceti, Project Hail Mary parks the Hail
+      // Mary and the Blip-A near Tau Ceti e. Solar has no ships, so this
+      // method short-circuits.
+      this.ships = [];
+      const shipDefs = this.systemDef.ships;
+      if (!shipDefs || shipDefs.length === 0) {
+        return;
+      }
+      const T = this.three;
+      for (const shipDef of shipDefs) {
+        let mesh;
+        if (shipDef.kind === "hailMary") {
+          mesh = this.createHailMaryMesh();
+        } else if (shipDef.kind === "blipA") {
+          mesh = this.createBlipAMesh();
+        } else {
+          continue;
+        }
+        mesh.position.fromArray(shipDef.position);
+
+        // Invisible pick sphere covers the whole ship so taps register easily.
+        const pickRadius = Math.max(shipDef.pickRadius || 0.06, PLANET_PICK_TARGET_MIN_SIZE);
+        const pickGeo = this.track(new T.SphereGeometry(pickRadius, PLANET_PICK_TARGET_SEGMENTS, PLANET_PICK_TARGET_SEGMENTS));
+        const pickMat = this.track(new T.MeshBasicMaterial({
+          transparent: true,
+          opacity: 0,
+          depthWrite: false
+        }));
+        const pickTarget = new T.Mesh(pickGeo, pickMat);
+        pickTarget.position.fromArray(shipDef.position);
+        pickTarget.name = `${shipDef.name} pick target`;
+
+        const shipState = {
+          mesh,
+          pickTarget,
+          data: shipDef.info,
+          centrifuge: mesh.userData.centrifuge || null
+        };
+        mesh.userData.planetState = shipState;
+        pickTarget.userData.planetState = shipState;
+
+        this.ships.push(shipState);
+        this.root.add(mesh, pickTarget);
+      }
+    },
+
+    createHailMaryMesh: function () {
+      const T = this.three;
+      const ship = new T.Group();
+
+      const hullMat = this.track(new T.MeshStandardMaterial({
+        color: "#e1ddcf", roughness: 0.55, metalness: 0.35
+      }));
+      const detailMat = this.track(new T.MeshStandardMaterial({
+        color: "#a4a098", roughness: 0.6, metalness: 0.55
+      }));
+      const engineMat = this.track(new T.MeshStandardMaterial({
+        color: "#5a5862", roughness: 0.4, metalness: 0.85
+      }));
+      const radiatorMat = this.track(new T.MeshStandardMaterial({
+        color: "#1f2230", roughness: 0.85, metalness: 0.1,
+        emissive: "#5a1a08", emissiveIntensity: 0.4,
+        side: T.DoubleSide
+      }));
+      const windowMat = this.track(new T.MeshBasicMaterial({
+        color: "#fff0b0", transparent: true, opacity: 0.85,
+        blending: T.AdditiveBlending, depthWrite: false
+      }));
+      const glowMat = this.track(new T.MeshBasicMaterial({
+        color: "#ffb24d", transparent: true, opacity: 0.5,
+        blending: T.AdditiveBlending, depthWrite: false
+      }));
+
+      // Spine — main structural cylinder along the ship's +Z forward axis.
+      const spineLen = 0.08;
+      const spine = new T.Mesh(
+        this.track(new T.CylinderGeometry(0.004, 0.004, spineLen, 14, 1)),
+        hullMat
+      );
+      spine.rotation.x = Math.PI / 2;
+      ship.add(spine);
+
+      // Front cupola (control deck).
+      const cupola = new T.Mesh(
+        this.track(new T.SphereGeometry(0.0085, 14, 12)),
+        hullMat
+      );
+      cupola.position.z = spineLen / 2;
+      ship.add(cupola);
+      const cupolaWindow = new T.Mesh(
+        this.track(new T.SphereGeometry(0.0055, 12, 10)),
+        windowMat
+      );
+      cupolaWindow.position.z = spineLen / 2 + 0.003;
+      cupolaWindow.scale.set(0.95, 0.55, 0.45);
+      ship.add(cupolaWindow);
+
+      // Centrifuge — three-arm crew section that slowly rotates around the spine.
+      const centrifuge = new T.Group();
+      centrifuge.position.z = -0.005;
+
+      const hub = new T.Mesh(
+        this.track(new T.CylinderGeometry(0.0075, 0.0075, 0.014, 14, 1)),
+        detailMat
+      );
+      hub.rotation.x = Math.PI / 2;
+      centrifuge.add(hub);
+
+      const armRadius = 0.024;
+      for (let i = 0; i < 3; i += 1) {
+        const armGroup = new T.Group();
+        armGroup.rotation.z = (i / 3) * TWO_PI;
+
+        const strut = new T.Mesh(
+          this.track(new T.CylinderGeometry(0.0016, 0.0016, armRadius, 8, 1)),
+          detailMat
+        );
+        strut.rotation.z = -Math.PI / 2;
+        strut.position.x = armRadius / 2;
+        armGroup.add(strut);
+
+        const capsuleGeo = T.CapsuleGeometry
+          ? this.track(new T.CapsuleGeometry(0.0058, 0.018, 6, 12))
+          : this.track(new T.CylinderGeometry(0.0058, 0.0058, 0.0296, 14, 1));
+        const capsule = new T.Mesh(capsuleGeo, hullMat);
+        capsule.rotation.x = Math.PI / 2;
+        capsule.position.x = armRadius + 0.005;
+        armGroup.add(capsule);
+
+        // Capsule window strip on the "outer" face of the capsule.
+        const windowStrip = new T.Mesh(
+          this.track(new T.PlaneGeometry(0.014, 0.0014)),
+          windowMat
+        );
+        windowStrip.position.set(armRadius + 0.005, 0.006, 0);
+        windowStrip.rotation.x = -Math.PI / 2;
+        armGroup.add(windowStrip);
+
+        centrifuge.add(armGroup);
+      }
+      ship.add(centrifuge);
+
+      // Radiator vanes — two big flat fins running along the ship body.
+      const radiatorGeo = this.track(new T.PlaneGeometry(0.045, 0.022));
+      for (const side of [-1, 1]) {
+        const radiator = new T.Mesh(radiatorGeo, radiatorMat);
+        radiator.rotation.x = Math.PI / 2;
+        radiator.position.set(side * 0.018, 0, -spineLen / 2 + 0.025);
+        ship.add(radiator);
+      }
+
+      // Engine bell + nozzles at the rear (-Z).
+      const bell = new T.Mesh(
+        this.track(new T.CylinderGeometry(0.013, 0.016, 0.014, 16, 1)),
+        engineMat
+      );
+      bell.position.z = -spineLen / 2 - 0.007;
+      bell.rotation.x = Math.PI / 2;
+      ship.add(bell);
+
+      for (let i = 0; i < 4; i += 1) {
+        const angle = (i / 4) * TWO_PI + Math.PI / 4;
+        const nozzle = new T.Mesh(
+          this.track(new T.CylinderGeometry(0.0035, 0.0055, 0.01, 10, 1)),
+          engineMat
+        );
+        nozzle.position.set(Math.cos(angle) * 0.008, Math.sin(angle) * 0.008, -spineLen / 2 - 0.018);
+        nozzle.rotation.x = Math.PI / 2;
+        ship.add(nozzle);
+      }
+
+      const driveGlow = new T.Mesh(
+        this.track(new T.SphereGeometry(0.014, 14, 12)),
+        glowMat
+      );
+      driveGlow.position.z = -spineLen / 2 - 0.024;
+      driveGlow.scale.set(1, 1, 1.7);
+      ship.add(driveGlow);
+
+      ship.userData.centrifuge = centrifuge;
+      return ship;
+    },
+
+    createBlipAMesh: function () {
+      const T = this.three;
+      const ship = new T.Group();
+
+      // Xenonite reads as warm, semi-translucent amber in the book. We fake
+      // that with a slightly metallic standard material plus a faint emissive.
+      const xenoniteMat = this.track(new T.MeshStandardMaterial({
+        color: "#f0e0b0", roughness: 0.35, metalness: 0.3,
+        emissive: "#3a2814", emissiveIntensity: 0.18
+      }));
+      const ridgeMat = this.track(new T.MeshStandardMaterial({
+        color: "#c8a868", roughness: 0.55, metalness: 0.45
+      }));
+      const portMat = this.track(new T.MeshStandardMaterial({
+        color: "#7a5a30", roughness: 0.7, metalness: 0.5
+      }));
+
+      // Main hull — flat oblate spheroid (the canonical Eridian "coffee bean").
+      const hull = new T.Mesh(
+        this.track(new T.SphereGeometry(0.045, 28, 20)),
+        xenoniteMat
+      );
+      hull.scale.set(1.0, 0.32, 0.95);
+      ship.add(hull);
+
+      // Equatorial seam ridge — Eridian hulls are described as segmented.
+      const seam = new T.Mesh(
+        this.track(new T.TorusGeometry(0.0445, 0.0028, 8, 40)),
+        ridgeMat
+      );
+      seam.rotation.x = Math.PI / 2;
+      ship.add(seam);
+
+      // A second, smaller belt ridge above the seam to add detail.
+      const beltUpper = new T.Mesh(
+        this.track(new T.TorusGeometry(0.04, 0.0014, 6, 36)),
+        ridgeMat
+      );
+      beltUpper.rotation.x = Math.PI / 2;
+      beltUpper.position.y = 0.005;
+      ship.add(beltUpper);
+
+      // Pole bumps at top and bottom — engine ports / sensor cluster.
+      for (const side of [-1, 1]) {
+        const polarBump = new T.Mesh(
+          this.track(new T.SphereGeometry(0.012, 16, 12)),
+          ridgeMat
+        );
+        polarBump.position.y = side * 0.013;
+        polarBump.scale.set(1, 0.55, 1);
+        ship.add(polarBump);
+
+        const polarPort = new T.Mesh(
+          this.track(new T.CylinderGeometry(0.005, 0.0065, 0.004, 14, 1)),
+          portMat
+        );
+        polarPort.position.y = side * 0.0165;
+        ship.add(polarPort);
+      }
+
+      // Rim ports — four equally-spaced docking / drive ports around the rim.
+      for (let i = 0; i < 4; i += 1) {
+        const angle = (i / 4) * TWO_PI;
+        const port = new T.Mesh(
+          this.track(new T.CylinderGeometry(0.005, 0.0065, 0.005, 12, 1)),
+          portMat
+        );
+        port.position.set(Math.cos(angle) * 0.045, 0, Math.sin(angle) * 0.045);
+        port.rotation.z = Math.PI / 2;
+        port.lookAt(0, 0, 0);
+        ship.add(port);
+      }
+
+      return ship;
     },
 
     createSaturnRing: function () {
@@ -1384,7 +1282,7 @@
       }
 
       this.onMarkerFound = () => {
-        this.setHud(HUD_FOUND_SOLAR_TEXT, true);
+        this.setHud(this.systemDef.foundText, true);
       };
       this.onMarkerLost = () => {
         this.setHud(HUD_LOST_TEXT, false);
@@ -1570,7 +1468,7 @@
         }
       }
       if (this.sun) {
-        this.sun.scale.setScalar(enabled ? TRUE_SCALE_SUN_FACTOR : 1);
+        this.sun.scale.setScalar(enabled ? this.systemDef.star.trueScaleFactor : 1);
       }
       this.setHud(
         enabled
@@ -1690,6 +1588,15 @@
         }
         meshes.push(planet.mesh);
       }
+      if (this.ships) {
+        // Ship visible meshes are Groups, so only the invisible pick sphere
+        // participates in the (non-recursive) raycast — it covers the ship.
+        for (const ship of this.ships) {
+          if (ship.pickTarget) {
+            meshes.push(ship.pickTarget);
+          }
+        }
+      }
 
       const hits = this.raycaster.intersectObjects(meshes, false);
 
@@ -1716,7 +1623,7 @@
       while (this.infoStats.firstChild) this.infoStats.removeChild(this.infoStats.firstChild);
       const rows = [
         ["Diameter", data.diameter],
-        ["Distance from Sun", data.distance],
+        ["Distance", data.distance],
         ["Year length", data.yearLength],
         ["Day length", data.dayLength],
         ["Moons", typeof data.moons === "number" ? String(data.moons) : data.moons]
@@ -1761,7 +1668,7 @@
         DISTANCE_SCALE_MAX
       );
       this.currentDistanceScale += (factor - this.currentDistanceScale) * DISTANCE_SCALE_LERP;
-      this.root.scale.setScalar(SOLAR_SCENE_SCALE * this.currentDistanceScale);
+      this.root.scale.setScalar(this.systemDef.sceneScale * this.currentDistanceScale);
     },
 
     tick: function (time, delta) {
@@ -1779,7 +1686,7 @@
       // multiplies on top of the larger scale.
       const pulseAmt = this.reducedMotion ? SOLAR_SUN_PULSE_AMOUNT * 0.25 : SOLAR_SUN_PULSE_AMOUNT;
       const pulse = 1 + Math.sin(time * SOLAR_SUN_PULSE_SPEED) * pulseAmt;
-      const sunBase = this.trueScale ? TRUE_SCALE_SUN_FACTOR : 1;
+      const sunBase = this.trueScale ? this.systemDef.star.trueScaleFactor : 1;
       this.sun.scale.setScalar(sunBase * pulse);
       this.sun.rotation.y += dt * SOLAR_SPIN_SPEED;
       this.stars.rotation.y += rawDt * SOLAR_STAR_ROTATION_SPEED;
@@ -1790,6 +1697,16 @@
 
         if (planet.moonPivot) {
           planet.moonPivot.rotation.y += dt * SOLAR_MOON_SPEED;
+        }
+      }
+
+      if (this.ships) {
+        // Centrifuge spin makes Hail Mary's crew section read as alive even
+        // while the ship itself stays put.
+        for (const ship of this.ships) {
+          if (ship.centrifuge) {
+            ship.centrifuge.rotation.z += dt * 0.0009;
+          }
         }
       }
 
