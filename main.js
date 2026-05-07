@@ -112,25 +112,25 @@
 
   // Tau Ceti System (G8V star ~12 light-years away with 4 confirmed super-Earths).
   const TAU_CETI_PLANETS = [
-    { name: "Tau Ceti g", radius: 0.22, size: 0.028, realSize: 1.17, color: "#c97a4f",
+    { name: "Tau Ceti g", radius: 0.22, size: 0.036, realSize: 1.17, color: "#c97a4f",
       texture: "tauCetiG", speed: 0.0022, spinSpeed: 0.003,
       axialTilt: 0.18,
       diameter: "~14,900 km (estimated)", yearLength: "20 Earth days", dayLength: "Unknown",
       distance: "0.133 AU (~20 million km)", moons: 0,
       info: "Innermost confirmed planet. A scorched super-Earth orbiting close to Tau Ceti." },
-    { name: "Tau Ceti h", radius: 0.34, size: 0.029, realSize: 1.19, color: "#b86045",
+    { name: "Tau Ceti h", radius: 0.34, size: 0.038, realSize: 1.19, color: "#b86045",
       texture: "tauCetiH", speed: 0.0016, spinSpeed: 0.0028,
       axialTilt: 0.22,
       diameter: "~15,200 km (estimated)", yearLength: "49 Earth days", dayLength: "Unknown",
       distance: "0.243 AU (~36 million km)", moons: 0,
       info: "A warm super-Earth, just inside the inner edge of the habitable zone." },
-    { name: "Tau Ceti e", radius: 0.56, size: 0.046, realSize: 1.81, color: "#5e8fbf",
+    { name: "Tau Ceti e", radius: 0.56, size: 0.058, realSize: 1.81, color: "#5e8fbf",
       texture: "tauCetiE", speed: 0.0011, spinSpeed: 0.0024,
       axialTilt: 0.4,
       diameter: "~23,000 km (estimated)", yearLength: "168 Earth days", dayLength: "Unknown",
       distance: "0.538 AU (~80 million km)", moons: 0,
       info: "Inner habitable zone. Could host liquid water depending on its atmosphere." },
-    { name: "Tau Ceti f", radius: 0.92, size: 0.045, realSize: 1.83, color: "#7896b8",
+    { name: "Tau Ceti f", radius: 0.92, size: 0.057, realSize: 1.83, color: "#7896b8",
       texture: "tauCetiF", speed: 0.00048, spinSpeed: 0.0022,
       axialTilt: 0.34,
       diameter: "~23,300 km (estimated)", yearLength: "642 Earth days", dayLength: "Unknown",
@@ -226,7 +226,7 @@
     },
     tauCeti: {
       foundText: "Tau Ceti System · tap a planet for info",
-      sceneScale: 0.62,
+      sceneScale: 0.82,
       // Star sits centered on the Kanji marker; planets orbit in the marker plane.
       sceneYOffset: 0,
       star: {
@@ -291,6 +291,11 @@
   const PLANET_PICK_TARGET_SCALE = 2.35;
   const PLANET_PICK_TARGET_MIN_SIZE = 0.075;
   const PLANET_PICK_TARGET_SEGMENTS = 18;
+  // The sun is already a big visible sphere, so its pick target only needs a
+  // small padding factor. Using PLANET_PICK_TARGET_SCALE here would extend the
+  // invisible click sphere past the innermost planet orbits and swallow taps
+  // on Mercury / Tau Ceti g.
+  const SUN_PICK_TARGET_SCALE = 1.1;
 
   // Distance-based zoom: as the camera moves further from the marker, the
   // solar system grows so it stays comfortably readable on screen.
@@ -397,7 +402,7 @@
       this.sunCorona = new this.three.Mesh(coronaGeometry, coronaMaterial);
       this.sun.add(this.sunCorona);
 
-      const sunPickRadius = Math.max(star.radius * PLANET_PICK_TARGET_SCALE, PLANET_PICK_TARGET_MIN_SIZE);
+      const sunPickRadius = Math.max(star.radius * SUN_PICK_TARGET_SCALE, PLANET_PICK_TARGET_MIN_SIZE);
       const sunPickGeometry = this.track(new this.three.SphereGeometry(sunPickRadius, PLANET_PICK_TARGET_SEGMENTS, PLANET_PICK_TARGET_SEGMENTS));
       const sunPickMaterial = this.track(new this.three.MeshBasicMaterial({
         transparent: true,
@@ -1676,10 +1681,22 @@
       if (hits.length === 0) {
         return;
       }
-      const hit = hits[0].object;
-      const state = hit.userData && hit.userData.planetState;
-      if (state) {
-        this.showPlanetInfo(state);
+      // Prefer planet / ship hits over the sun: the sun's pick sphere can
+      // overlap inner-planet pick spheres, and the closest hit by distance
+      // would otherwise resolve to the star even when the ray passes through
+      // a planet too.
+      let chosen = null;
+      for (const hit of hits) {
+        const state = hit.object.userData && hit.object.userData.planetState;
+        if (!state) continue;
+        if (state !== this.sunState) {
+          chosen = state;
+          break;
+        }
+        if (!chosen) chosen = state;
+      }
+      if (chosen) {
+        this.showPlanetInfo(chosen);
       }
     },
 
