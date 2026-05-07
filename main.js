@@ -304,6 +304,12 @@
   const DISTANCE_SCALE_MAX = 2.6;
   const DISTANCE_SCALE_LERP = 0.12;
 
+  // User-driven zoom (pinch on touch, wheel on desktop). Multiplies on top of
+  // the auto distance scale.
+  const USER_ZOOM_MIN = 0.4;
+  const USER_ZOOM_MAX = 3.5;
+  const WHEEL_ZOOM_STEP = 1.08;
+
   const TWO_PI = Math.PI * 2;
   const IS_LOCAL_FILE = window.location.protocol === "file:";
   const IS_LOCALHOST = LOCALHOST_NAMES.includes(window.location.hostname);
@@ -332,6 +338,7 @@
       this.pickTargets = [];
       this.disposables = [];
       this.currentDistanceScale = 1;
+      this.userZoom = 1;
       this.tmpCamPos = new this.three.Vector3();
       this.tmpRootPos = new this.three.Vector3();
 
@@ -1360,9 +1367,14 @@
       }
 
       this.onMarkerFound = () => {
+        // Two scenes can share a marker (the system-switcher hides one). Only
+        // the visible one should drive the HUD so the inactive scene doesn't
+        // overwrite the active scene's status text.
+        if (!this.el.object3D.visible) return;
         this.setHud(this.systemDef.foundText, true);
       };
       this.onMarkerLost = () => {
+        if (!this.el.object3D.visible) return;
         this.setHud(HUD_LOST_TEXT, false);
       };
 
@@ -1569,6 +1581,15 @@
       this.raycaster = new this.three.Raycaster();
       this.pointer = new this.three.Vector2();
       this.pointerStart = { x: 0, y: 0, time: 0 };
+      // Multi-touch state for pinch zoom. activePointers is a Map of
+      // pointerId → {x,y}. tapEligible tracks whether the current single
+      // pointer is still a candidate for a planet tap (cancelled if a second
+      // finger lands or the pointer travels too far).
+      this.activePointers = new Map();
+      this.pinchActive = false;
+      this.pinchInitialDist = 0;
+      this.pinchInitialZoom = 1;
+      this.tapEligible = false;
 
       const scene = this.el.sceneEl;
       const attach = () => {
@@ -1578,48 +1599,99 @@
         }
         this.pickCanvas = canvas;
 
-        const startPress = (event) => {
-          const point = this.getEventPoint(event);
-          if (!point) {
-            return;
+        const isVisible = () => this.el.object3D.visible;
+
+        const onDown = (event) => {
+          if (!isVisible()) return;
+          this.activePointers.set(event.pointerId, { x: event.clientX, y: event.clientY });
+
+          if (this.activePointers.size === 1) {
+            this.pointerStart.x = event.clientX;
+            this.pointerStart.y = event.clientY;
+            this.pointerStart.time = performance.now();
+            this.tapEligible = true;
+          } else if (this.activePointers.size === 2) {
+            // Second finger landed → switch into pinch mode and discard the
+            // pending tap so a one-finger lift doesn't trigger picking.
+            this.tapEligible = false;
+            const pts = Array.from(this.activePointers.values());
+            this.pinchInitialDist = Math.hypot(pts[0].x - pts[1].x, pts[0].y - pts[1].y) || 1;
+            this.pinchInitialZoom = this.userZoom;
+            this.pinchActive = true;
           }
-          this.pointerStart.x = point.x;
-          this.pointerStart.y = point.y;
-          this.pointerStart.time = performance.now();
         };
 
-        const finishPress = (event) => {
-          const point = this.getEventPoint(event);
-          if (!point) {
-            return;
+        const onMove = (event) => {
+          if (!this.activePointers.has(event.pointerId)) return;
+          this.activePointers.set(event.pointerId, { x: event.clientX, y: event.clientY });
+          if (this.pinchActive && this.activePointers.size >= 2) {
+            const pts = Array.from(this.activePointers.values());
+            const dist = Math.hypot(pts[0].x - pts[1].x, pts[0].y - pts[1].y);
+            const ratio = dist / this.pinchInitialDist;
+            this.userZoom = this.three.MathUtils.clamp(
+              this.pinchInitialZoom * ratio,
+              USER_ZOOM_MIN,
+              USER_ZOOM_MAX
+            );
           }
-          const dx = point.x - this.pointerStart.x;
-          const dy = point.y - this.pointerStart.y;
-          const elapsed = performance.now() - this.pointerStart.time;
-
-          // Only treat short, near-stationary presses as taps so dragging the
-          // camera around the marker doesn't open the info panel.
-          if (elapsed > 600 || Math.hypot(dx, dy) > 12) {
-            return;
-          }
-          this.tryPickPlanet(point.x, point.y);
         };
 
-        this.onPointerDown = startPress;
-        this.onPointerUp = finishPress;
-        canvas.addEventListener("pointerdown", this.onPointerDown);
-        canvas.addEventListener("pointerup", this.onPointerUp);
+        const onUp = (event) => {
+          const point = this.activePointers.get(event.pointerId) || {
+            x: event.clientX,
+            y: event.clientY
+          };
+          this.activePointers.delete(event.pointerId);
 
-        if (!window.PointerEvent) {
-          this.onTouchStart = startPress;
-          this.onTouchEnd = finishPress;
-          this.onMouseDown = startPress;
-          this.onMouseUp = finishPress;
-          canvas.addEventListener("touchstart", this.onTouchStart);
-          canvas.addEventListener("touchend", this.onTouchEnd);
-          canvas.addEventListener("mousedown", this.onMouseDown);
-          canvas.addEventListener("mouseup", this.onMouseUp);
-        }
+          if (this.pinchActive && this.activePointers.size < 2) {
+            this.pinchActive = false;
+          }
+
+          if (
+            isVisible() &&
+            this.tapEligible &&
+            this.activePointers.size === 0
+          ) {
+            const dx = point.x - this.pointerStart.x;
+            const dy = point.y - this.pointerStart.y;
+            const elapsed = performance.now() - this.pointerStart.time;
+            if (elapsed <= 600 && Math.hypot(dx, dy) <= 12) {
+              this.tryPickPlanet(point.x, point.y);
+            }
+          }
+
+          if (this.activePointers.size === 0) {
+            this.tapEligible = false;
+          }
+        };
+
+        const onCancel = (event) => {
+          this.activePointers.delete(event.pointerId);
+          this.pinchActive = false;
+          this.tapEligible = false;
+        };
+
+        const onWheel = (event) => {
+          if (!isVisible()) return;
+          event.preventDefault();
+          const factor = event.deltaY < 0 ? WHEEL_ZOOM_STEP : 1 / WHEEL_ZOOM_STEP;
+          this.userZoom = this.three.MathUtils.clamp(
+            this.userZoom * factor,
+            USER_ZOOM_MIN,
+            USER_ZOOM_MAX
+          );
+        };
+
+        this.onPointerDown = onDown;
+        this.onPointerMove = onMove;
+        this.onPointerUp = onUp;
+        this.onPointerCancel = onCancel;
+        this.onWheel = onWheel;
+        canvas.addEventListener("pointerdown", onDown);
+        canvas.addEventListener("pointermove", onMove);
+        canvas.addEventListener("pointerup", onUp);
+        canvas.addEventListener("pointercancel", onCancel);
+        canvas.addEventListener("wheel", onWheel, { passive: false });
       };
 
       if (scene && scene.hasLoaded) {
@@ -1627,6 +1699,10 @@
       } else if (scene) {
         scene.addEventListener("loaded", attach, { once: true });
       }
+    },
+
+    resetUserZoom: function () {
+      this.userZoom = 1;
     },
 
     getEventPoint: function (event) {
@@ -1758,7 +1834,7 @@
         DISTANCE_SCALE_MAX
       );
       this.currentDistanceScale += (factor - this.currentDistanceScale) * DISTANCE_SCALE_LERP;
-      this.root.scale.setScalar(this.systemDef.sceneScale * this.currentDistanceScale);
+      this.root.scale.setScalar(this.systemDef.sceneScale * this.currentDistanceScale * this.userZoom);
     },
 
     tick: function (time, delta) {
@@ -1842,20 +1918,17 @@
         if (this.onPointerDown) {
           this.pickCanvas.removeEventListener("pointerdown", this.onPointerDown);
         }
+        if (this.onPointerMove) {
+          this.pickCanvas.removeEventListener("pointermove", this.onPointerMove);
+        }
         if (this.onPointerUp) {
           this.pickCanvas.removeEventListener("pointerup", this.onPointerUp);
         }
-        if (this.onTouchStart) {
-          this.pickCanvas.removeEventListener("touchstart", this.onTouchStart);
+        if (this.onPointerCancel) {
+          this.pickCanvas.removeEventListener("pointercancel", this.onPointerCancel);
         }
-        if (this.onTouchEnd) {
-          this.pickCanvas.removeEventListener("touchend", this.onTouchEnd);
-        }
-        if (this.onMouseDown) {
-          this.pickCanvas.removeEventListener("mousedown", this.onMouseDown);
-        }
-        if (this.onMouseUp) {
-          this.pickCanvas.removeEventListener("mouseup", this.onMouseUp);
+        if (this.onWheel) {
+          this.pickCanvas.removeEventListener("wheel", this.onWheel);
         }
       }
 
@@ -1892,4 +1965,51 @@
       }
     }
   });
+
+  // System switcher: a single Hiro marker hosts both scenes; the button
+  // toggles which one is visible. Each scene already guards its picker, marker
+  // events, and zoom on `this.el.object3D.visible`, so flipping that flag is
+  // enough to swap systems without re-initialising any THREE resources.
+  const setupSystemSwitcher = () => {
+    const button = document.getElementById("systemSwitchButton");
+    const solarScene = document.getElementById("solarScene");
+    const tauCetiScene = document.getElementById("tauCetiScene");
+    const aScene = document.querySelector("a-scene");
+    if (!button || !solarScene || !tauCetiScene || !aScene) return;
+
+    const SYSTEMS_ORDER = [
+      { el: solarScene, key: "solar", label: "Solar System", switchTo: "Tau Ceti" },
+      { el: tauCetiScene, key: "tauCeti", label: "Tau Ceti", switchTo: "Solar System" }
+    ];
+    let activeIndex = 0;
+
+    const apply = () => {
+      SYSTEMS_ORDER.forEach((s, i) => {
+        s.el.object3D.visible = (i === activeIndex);
+      });
+      const next = SYSTEMS_ORDER[(activeIndex + 1) % SYSTEMS_ORDER.length];
+      button.innerHTML = `<span class="system-switch-icon" aria-hidden="true">⇄</span> ${next.label}`;
+      // Close any open info card so it doesn't refer to the previous system.
+      document.querySelectorAll(".planet-info.is-visible").forEach((p) => {
+        p.classList.remove("is-visible");
+      });
+    };
+
+    button.addEventListener("click", () => {
+      activeIndex = (activeIndex + 1) % SYSTEMS_ORDER.length;
+      apply();
+    });
+
+    if (aScene.hasLoaded) {
+      apply();
+    } else {
+      aScene.addEventListener("loaded", apply, { once: true });
+    }
+  };
+
+  if (document.readyState === "loading") {
+    document.addEventListener("DOMContentLoaded", setupSystemSwitcher);
+  } else {
+    setupSystemSwitcher();
+  }
 }());
