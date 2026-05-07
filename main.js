@@ -165,7 +165,7 @@
       kind: "hailMary",
       position: [-0.045, 0.045, 0.5],
       pickRadius: 0.06,
-      modelUrl: "./source/Project%20Hail%20Mary.glb",
+      modelUrl: "./Project%20Hail%20Mary.glb",
       modelScale: 0.002,
       modelRotation: [0, 0, 0],
       info: {
