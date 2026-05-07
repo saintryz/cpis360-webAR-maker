@@ -1590,6 +1590,18 @@
       this.pinchInitialDist = 0;
       this.pinchInitialZoom = 1;
       this.tapEligible = false;
+      // Pan state: when active, root.position tracks finger movement so the
+      // system can be picked up and moved freely in 3D (XY on screen → world
+      // motion on the plane perpendicular to the camera at the grab point,
+      // which gives natural up/down/left/right with one finger).
+      this.panActive = false;
+      this._panRootStartWorld = new this.three.Vector3();
+      this._panGrabStartWorld = new this.three.Vector3();
+      this._panPlane = new this.three.Plane();
+      this._panTmpDir = new this.three.Vector3();
+      this._panTmpGrab = new this.three.Vector3();
+      this._panTmpNew = new this.three.Vector3();
+      this.PAN_THRESHOLD_PX = 12;
 
       const scene = this.el.sceneEl;
       const attach = () => {
@@ -1610,20 +1622,27 @@
             this.pointerStart.y = event.clientY;
             this.pointerStart.time = performance.now();
             this.tapEligible = true;
+            this.panActive = false;
           } else if (this.activePointers.size === 2) {
             // Second finger landed → switch into pinch mode and discard the
-            // pending tap so a one-finger lift doesn't trigger picking.
+            // pending tap so a one-finger lift doesn't trigger picking. Also
+            // re-anchor pan to the centroid so two-finger drag pans smoothly
+            // alongside the pinch scale.
             this.tapEligible = false;
             const pts = Array.from(this.activePointers.values());
             this.pinchInitialDist = Math.hypot(pts[0].x - pts[1].x, pts[0].y - pts[1].y) || 1;
             this.pinchInitialZoom = this.userZoom;
             this.pinchActive = true;
+            const cx = (pts[0].x + pts[1].x) / 2;
+            const cy = (pts[0].y + pts[1].y) / 2;
+            this.beginPan(cx, cy);
           }
         };
 
         const onMove = (event) => {
           if (!this.activePointers.has(event.pointerId)) return;
           this.activePointers.set(event.pointerId, { x: event.clientX, y: event.clientY });
+
           if (this.pinchActive && this.activePointers.size >= 2) {
             const pts = Array.from(this.activePointers.values());
             const dist = Math.hypot(pts[0].x - pts[1].x, pts[0].y - pts[1].y);
@@ -1633,6 +1652,23 @@
               USER_ZOOM_MIN,
               USER_ZOOM_MAX
             );
+            const cx = (pts[0].x + pts[1].x) / 2;
+            const cy = (pts[0].y + pts[1].y) / 2;
+            this.updatePan(cx, cy);
+          } else if (this.activePointers.size === 1) {
+            const pt = this.activePointers.get(event.pointerId);
+            if (!pt) return;
+            const dx = pt.x - this.pointerStart.x;
+            const dy = pt.y - this.pointerStart.y;
+            // Promote the gesture to a pan only after passing the tap
+            // threshold, so a held-still tap keeps picking planets.
+            if (!this.panActive && Math.hypot(dx, dy) > this.PAN_THRESHOLD_PX) {
+              this.tapEligible = false;
+              this.beginPan(this.pointerStart.x, this.pointerStart.y);
+            }
+            if (this.panActive) {
+              this.updatePan(pt.x, pt.y);
+            }
           }
         };
 
@@ -1645,6 +1681,16 @@
 
           if (this.pinchActive && this.activePointers.size < 2) {
             this.pinchActive = false;
+            // 2 → 1 finger transition: re-anchor the pan to the remaining
+            // finger's current position so the system doesn't jump.
+            if (this.activePointers.size === 1) {
+              const remaining = Array.from(this.activePointers.values())[0];
+              this.pointerStart.x = remaining.x;
+              this.pointerStart.y = remaining.y;
+              this.pointerStart.time = performance.now();
+              this.tapEligible = false;
+              this.beginPan(remaining.x, remaining.y);
+            }
           }
 
           if (
@@ -1655,13 +1701,14 @@
             const dx = point.x - this.pointerStart.x;
             const dy = point.y - this.pointerStart.y;
             const elapsed = performance.now() - this.pointerStart.time;
-            if (elapsed <= 600 && Math.hypot(dx, dy) <= 12) {
+            if (elapsed <= 600 && Math.hypot(dx, dy) <= this.PAN_THRESHOLD_PX) {
               this.tryPickPlanet(point.x, point.y);
             }
           }
 
           if (this.activePointers.size === 0) {
             this.tapEligible = false;
+            this.panActive = false;
           }
         };
 
@@ -1669,6 +1716,7 @@
           this.activePointers.delete(event.pointerId);
           this.pinchActive = false;
           this.tapEligible = false;
+          if (this.activePointers.size === 0) this.panActive = false;
         };
 
         const onWheel = (event) => {
@@ -1703,6 +1751,61 @@
 
     resetUserZoom: function () {
       this.userZoom = 1;
+    },
+
+    resetUserTransform: function () {
+      this.userZoom = 1;
+      this.root.position.set(0, this.systemDef.sceneYOffset, 0);
+      this.panActive = false;
+    },
+
+    beginPan: function (clientX, clientY) {
+      const camera = this.el.sceneEl && this.el.sceneEl.camera;
+      if (!camera || !this.pickCanvas) {
+        this.panActive = false;
+        return;
+      }
+      const rect = this.pickCanvas.getBoundingClientRect();
+      this.pointer.x = ((clientX - rect.left) / rect.width) * 2 - 1;
+      this.pointer.y = -((clientY - rect.top) / rect.height) * 2 + 1;
+      this.raycaster.setFromCamera(this.pointer, camera);
+
+      this.root.getWorldPosition(this._panRootStartWorld);
+      camera.getWorldDirection(this._panTmpDir);
+      // Plane through the system's current world position, perpendicular to
+      // the camera. Translation in screen XY maps onto this plane, which
+      // gives natural up/down/left/right drag in world space.
+      this._panPlane.setFromNormalAndCoplanarPoint(this._panTmpDir, this._panRootStartWorld);
+
+      const hit = this.raycaster.ray.intersectPlane(this._panPlane, this._panGrabStartWorld);
+      this.panActive = !!hit;
+    },
+
+    updatePan: function (clientX, clientY) {
+      if (!this.panActive) return;
+      const camera = this.el.sceneEl && this.el.sceneEl.camera;
+      if (!camera || !this.pickCanvas) return;
+
+      const rect = this.pickCanvas.getBoundingClientRect();
+      this.pointer.x = ((clientX - rect.left) / rect.width) * 2 - 1;
+      this.pointer.y = -((clientY - rect.top) / rect.height) * 2 + 1;
+      this.raycaster.setFromCamera(this.pointer, camera);
+
+      const hit = this.raycaster.ray.intersectPlane(this._panPlane, this._panTmpGrab);
+      if (!hit) return;
+
+      // newRootWorld = startRootWorld + (currentGrab − startGrab)
+      this._panTmpNew
+        .copy(this._panRootStartWorld)
+        .add(this._panTmpGrab)
+        .sub(this._panGrabStartWorld);
+
+      // Convert world → root.parent local so the system stays attached to
+      // the marker (any marker pose change is applied on top of our offset).
+      if (this.root.parent) {
+        this.root.parent.worldToLocal(this._panTmpNew);
+      }
+      this.root.position.copy(this._panTmpNew);
     },
 
     getEventPoint: function (event) {
@@ -1986,6 +2089,12 @@
     const apply = () => {
       SYSTEMS_ORDER.forEach((s, i) => {
         s.el.object3D.visible = (i === activeIndex);
+        // Reset zoom/pan on the scene becoming active so the user always
+        // starts a system from a centered, default-zoom view.
+        const comp = s.el.components && s.el.components["solar-system-scene"];
+        if (i === activeIndex && comp && typeof comp.resetUserTransform === "function") {
+          comp.resetUserTransform();
+        }
       });
       const next = SYSTEMS_ORDER[(activeIndex + 1) % SYSTEMS_ORDER.length];
       button.innerHTML = `<span class="system-switch-icon" aria-hidden="true">⇄</span> ${next.label}`;
