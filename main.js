@@ -1371,11 +1371,19 @@
         // the visible one should drive the HUD so the inactive scene doesn't
         // overwrite the active scene's status text.
         if (!this.el.object3D.visible) return;
+        this.markerEverFound = true;
         this.setHud(this.systemDef.foundText, true);
       };
       this.onMarkerLost = () => {
         if (!this.el.object3D.visible) return;
-        this.setHud(HUD_LOST_TEXT, false);
+        // Once the marker has been detected at least once we keep the system
+        // on screen (head-locked at its last marker pose), so the lost text
+        // would lie to the user. Show a friendlier hint instead.
+        if (this.markerEverFound) {
+          this.setHud("Marker out of view · system stays put. Drag, pinch & tap still work.", true);
+        } else {
+          this.setHud(HUD_LOST_TEXT, false);
+        }
       };
 
       this.marker.addEventListener("markerFound", this.onMarkerFound);
@@ -2116,9 +2124,36 @@
     }
   };
 
-  if (document.readyState === "loading") {
-    document.addEventListener("DOMContentLoaded", setupSystemSwitcher);
-  } else {
+  // Marker persistence: AR.js sets `marker.object3D.visible = false` whenever
+  // detection drops, which makes the system flicker out the moment the camera
+  // looks away from the printed marker. After the first successful detection
+  // we override this every frame so the system stays on screen at its last
+  // known pose — the user can keep panning, pinching and tapping even with
+  // the marker out of view.
+  const setupMarkerPersistence = () => {
+    const marker = document.getElementById("hiroMarker");
+    if (!marker) return;
+    let everDetected = false;
+    marker.addEventListener("markerFound", () => {
+      everDetected = true;
+    });
+    const tick = () => {
+      if (everDetected && marker.object3D && !marker.object3D.visible) {
+        marker.object3D.visible = true;
+      }
+      window.requestAnimationFrame(tick);
+    };
+    window.requestAnimationFrame(tick);
+  };
+
+  const ready = () => {
     setupSystemSwitcher();
+    setupMarkerPersistence();
+  };
+
+  if (document.readyState === "loading") {
+    document.addEventListener("DOMContentLoaded", ready);
+  } else {
+    ready();
   }
 }());
