@@ -11,7 +11,7 @@ Status: started.
 - Add a service worker for the lightweight app shell.
 - Keep large GLB models out of the service-worker cache to avoid filling phone storage.
 - Add clear runtime messages for unsupported cameras or failed AR library loading.
-- Keep Git LFS enabled for model assets.
+- Publish current GLB files directly because GitHub Pages does not serve Git LFS objects as normal static model assets.
 
 ## Phase 2: Performance and Asset Pipeline
 

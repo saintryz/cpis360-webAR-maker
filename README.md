@@ -38,7 +38,7 @@ This project now includes the first layer of production hardening:
 - Web App Manifest metadata for installable browser/PWA behavior
 - a lightweight service worker that caches only the app shell, not the large GLB models
 - a boot-time AR dependency check that shows a clear message if CDN libraries fail
-- Git LFS tracking for large model assets
+- direct binary model publishing so GitHub Pages can serve GLB files
 
 See `PRODUCTION_ROADMAP.md` for the next upgrade phases.
 
@@ -60,18 +60,11 @@ See `PRODUCTION_ROADMAP.md` for the next upgrade phases.
 - `PRODUCTION_ROADMAP.md`: next steps for moving from course prototype to production app.
 - `index.html`, `main.js`, `style.css`: prototype source.
 - `serve.js`: tiny local server.
-- `.gitattributes`: marks GLB files for Git LFS when publishing to GitHub.
+- `.gitattributes`: marks binary assets so GitHub Pages serves model files directly.
 
 ## GitHub Upload Notes
 
-This repository contains large `.glb` model files. Before pushing to GitHub, install Git LFS and run:
-
-```bash
-git lfs install
-git add .gitattributes
-```
-
-The largest file is `uranus.glb` at about 83 MB. GitHub accepts files under 100 MB, but it warns above 50 MB, so Git LFS is recommended.
+This repository contains large `.glb` model files. GitHub Pages does not serve Git LFS model objects as normal static files, so the models are committed directly as binary assets. The largest file is `uranus.glb` at about 83 MB, which is below GitHub's 100 MB per-file limit but may load slowly on older phones.
 
 The repository license covers the project code and documentation. Third-party models and libraries keep their original licenses, listed in `ASSET_CREDITS.md`.
 
