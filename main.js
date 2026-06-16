@@ -33,7 +33,7 @@
       onboardingMarkerDownload: "Download",
       onboardingTip: "Tip: Tap a planet or ship for fun facts. Drag to move it around. Pinch to zoom. Use the button to switch systems.",
       onboardingClose: "Got it - let's go!",
-      hudDefault: "☀️ Hiro marker · drag to move · pinch to zoom · tap planets or ships for info",
+      hudDefault: "☀️ Hiro marker · drag to move · pinch to zoom · two-finger scroll to orbit",
       hudLost: "Searching for the Hiro marker",
       markerLostPersistent: "Marker out of view · system stays put. Drag, pinch & tap still work.",
       supportMessage: "Camera AR needs a browser with WebRTC camera support. Use HTTPS or localhost if your browser blocks camera access.",
@@ -250,7 +250,7 @@
       onboardingMarkerDownload: "تحميل",
       onboardingTip: "نصيحة: اضغط على كوكب أو سفينة لعرض معلومات ممتعة. اسحب للتحريك، واقرص للتكبير، واستخدم الزر لتبديل النظام.",
       onboardingClose: "فهمت، لنبدأ!",
-      hudDefault: "☀️ علامة Hiro · اسحب للتحريك · اقرص للتكبير · اضغط على الكواكب أو السفن للمعلومات",
+      hudDefault: "☀️ علامة Hiro · اسحب للتحريك · اقرص للتكبير · مرّر بإصبعين لتدوير العرض",
       hudLost: "جارٍ البحث عن علامة Hiro",
       markerLostPersistent: "العلامة خارج الكاميرا · النظام سيبقى ظاهرًا. اسحب أو كبّر أو اضغط كما تريد.",
       supportMessage: "الواقع المعزز يحتاج متصفحًا يدعم كاميرا WebRTC. استخدم HTTPS أو localhost إذا منع المتصفح تشغيل الكاميرا.",
@@ -998,11 +998,13 @@
   const DISTANCE_SCALE_MAX = 2.6;
   const DISTANCE_SCALE_LERP = 0.12;
 
-  // User-driven zoom (pinch on touch, wheel on desktop). Multiplies on top of
-  // the auto distance scale.
+  // User-driven zoom (pinch / modified wheel) and trackpad orbit controls.
+  // These multiply or rotate on top of the auto marker-distance scale.
   const USER_ZOOM_MIN = 0.4;
   const USER_ZOOM_MAX = 3.5;
   const WHEEL_ZOOM_STEP = 1.08;
+  const TRACKPAD_ROTATION_DEG_PER_PIXEL = 0.16;
+  const TRACKPAD_ROLL_DEG_PER_PIXEL = 0.12;
   const VIEW_TILT_LIMIT = 90;
   const VIEW_ROTATION_LIMIT = 180;
   const VIEW_ROTATION_STEP = 1;
@@ -3964,11 +3966,39 @@
       return this.three.MathUtils.radToDeg(this.root.rotation[axis] || 0);
     },
 
+    normalizeRotationDegrees: function (value) {
+      let next = Number.isFinite(value) ? value : 0;
+      next = ((next + 180) % 360 + 360) % 360 - 180;
+      return next === -180 ? 180 : next;
+    },
+
     setRootRotation: function (axis, value) {
-      const limit = axis === "x" ? VIEW_TILT_LIMIT : VIEW_ROTATION_LIMIT;
-      const next = this.three.MathUtils.clamp(value || 0, -limit, limit);
+      const raw = Number.isFinite(value) ? value : 0;
+      const next = axis === "x"
+        ? this.three.MathUtils.clamp(raw, -VIEW_TILT_LIMIT, VIEW_TILT_LIMIT)
+        : this.normalizeRotationDegrees(raw);
       this.root.rotation[axis] = this.three.MathUtils.degToRad(next);
       this.syncViewControls();
+    },
+
+    rotateViewByTrackpad: function (deltaX, deltaY, rollMode) {
+      if (rollMode) {
+        this.setRootRotation("z", this.getRootRotation("z") + deltaY * TRACKPAD_ROLL_DEG_PER_PIXEL);
+        return;
+      }
+
+      this.setRootRotation("x", this.getRootRotation("x") + deltaY * TRACKPAD_ROTATION_DEG_PER_PIXEL);
+      this.setRootRotation("y", this.getRootRotation("y") + deltaX * TRACKPAD_ROTATION_DEG_PER_PIXEL);
+    },
+
+    normalizeWheelDelta: function (event) {
+      const lineHeight = 16;
+      const pageHeight = Math.max(window.innerHeight || 800, 1);
+      const multiplier = event.deltaMode === 1 ? lineHeight : (event.deltaMode === 2 ? pageHeight : 1);
+      return {
+        x: event.deltaX * multiplier,
+        y: event.deltaY * multiplier
+      };
     },
 
     syncViewControls: function () {
@@ -4259,12 +4289,23 @@
         const onWheel = (event) => {
           if (!isVisible()) return;
           consume(event);
-          const factor = event.deltaY < 0 ? WHEEL_ZOOM_STEP : 1 / WHEEL_ZOOM_STEP;
-          this.userZoom = this.three.MathUtils.clamp(
-            this.userZoom * factor,
-            USER_ZOOM_MIN,
-            USER_ZOOM_MAX
-          );
+          const delta = this.normalizeWheelDelta(event);
+
+          // Trackpads report two-finger scroll as wheel deltas. Treat regular
+          // two-finger movement like orbit controls: vertical scroll tilts the
+          // system, horizontal scroll turns it. Browser pinch gestures usually
+          // arrive as ctrl/meta wheel events, so keep those for zoom.
+          if (event.ctrlKey || event.metaKey || event.altKey) {
+            const factor = Math.pow(WHEEL_ZOOM_STEP, -delta.y / 80);
+            this.userZoom = this.three.MathUtils.clamp(
+              this.userZoom * factor,
+              USER_ZOOM_MIN,
+              USER_ZOOM_MAX
+            );
+            return;
+          }
+
+          this.rotateViewByTrackpad(delta.x, delta.y, event.shiftKey);
         };
 
         this.onPointerDown = onDown;
