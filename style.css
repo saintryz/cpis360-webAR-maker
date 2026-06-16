@@ -1839,6 +1839,36 @@ html[dir="rtl"] .lesson-button {
   font-weight: 800;
 }
 
+summary.control-section-title {
+  min-height: var(--target-min);
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--space-2);
+  cursor: pointer;
+  list-style: none;
+}
+
+summary.control-section-title::-webkit-details-marker {
+  display: none;
+}
+
+summary.control-section-title::after {
+  content: "⌄";
+  width: 24px;
+  height: 24px;
+  display: inline-grid;
+  place-items: center;
+  border-radius: 50%;
+  color: rgba(255, 255, 255, 0.72);
+  background: rgba(255, 255, 255, 0.08);
+  transition: transform 160ms ease;
+}
+
+.view-controls[open] > summary.control-section-title::after {
+  transform: rotate(180deg);
+}
+
 .control-view-row {
   grid-template-columns: 48px minmax(0, 1fr) 48px;
 }
@@ -1916,7 +1946,7 @@ html[dir="rtl"] .lesson-button {
   transition: width 180ms ease;
 }
 
-:where(button, [href], input, select, textarea):focus-visible {
+:where(button, [href], input, select, textarea, summary):focus-visible {
   outline: 2px solid var(--focus-color) !important;
   outline-offset: 3px !important;
   box-shadow: var(--focus-shadow);
@@ -1949,10 +1979,87 @@ html[dir="rtl"] .lesson-button {
     right: calc(10px + var(--safe-right));
     bottom: calc(70px + var(--safe-bottom));
     width: auto;
-    max-height: min(52vh, 390px);
-    padding: var(--space-3);
+    max-height: min(40vh, 300px);
+    padding: 10px;
+    grid-template-columns: max-content minmax(0, 1fr);
+    align-items: start;
     gap: var(--space-2);
     overflow-y: auto;
+    border-radius: 14px;
+  }
+
+  .control-row {
+    grid-template-columns: minmax(54px, max-content) minmax(0, 1fr) 48px;
+    gap: 6px;
+  }
+
+  .control-pause-row {
+    grid-column: 1;
+    grid-template-columns: max-content;
+    justify-content: start;
+  }
+
+  .control-pause-row .control-button {
+    min-width: 96px;
+  }
+
+  .control-speed-row {
+    grid-column: 2;
+    grid-template-columns: max-content minmax(84px, 1fr) 40px;
+  }
+
+  .view-controls,
+  .control-row-toggles {
+    grid-column: 1 / -1;
+  }
+
+  .control-label,
+  .control-section-title {
+    font-size: 0.8125rem;
+    white-space: nowrap;
+  }
+
+  .control-value {
+    font-size: 0.8125rem;
+  }
+
+  .control-button {
+    min-height: var(--target-min);
+    padding: 9px 10px;
+    font-size: 0.8125rem;
+  }
+
+  .view-controls {
+    padding: 0;
+    gap: 0;
+    overflow: hidden;
+  }
+
+  summary.control-section-title {
+    padding: 0 12px;
+  }
+
+  .view-controls[open] {
+    gap: var(--space-2);
+    padding-bottom: 10px;
+  }
+
+  .view-controls[open] > .control-view-row,
+  .view-controls[open] > .control-view-reset-row {
+    margin-inline: 10px;
+  }
+
+  .control-view-row {
+    grid-template-columns: 46px minmax(0, 1fr) 44px;
+  }
+
+  .control-view-reset-row .control-button {
+    justify-self: start;
+    min-width: 124px;
+  }
+
+  .control-row-toggles {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
   }
 
   .planet-info {

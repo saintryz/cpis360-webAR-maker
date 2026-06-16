@@ -3956,7 +3956,7 @@
 
       // Pause / play.
       const pauseRow = makeRow();
-      pauseRow.classList.add("control-single-button-row");
+      pauseRow.classList.add("control-single-button-row", "control-pause-row");
       const pauseBtn = makeButton(this.paused ? t("playButton") : t("pauseButton"), t("pauseAria"), () => {
         this.setPausedState(!this.paused);
       });
@@ -3965,6 +3965,7 @@
 
       // Speed slider.
       const speedRow = makeRow(t("speedLabel"));
+      speedRow.classList.add("control-speed-row");
       const speedSlider = document.createElement("input");
       speedSlider.type = "range";
       speedSlider.className = "control-slider";
@@ -3989,9 +3990,10 @@
       // from above, below, and the sides on desktop or phone.
       this.viewSliders = {};
       this.viewValues = {};
-      const positionGroup = document.createElement("div");
+      const positionGroup = document.createElement("details");
       positionGroup.className = "view-controls";
-      const positionTitle = document.createElement("div");
+      positionGroup.open = !window.matchMedia(MOBILE_QUERY).matches;
+      const positionTitle = document.createElement("summary");
       positionTitle.className = "control-section-title";
       positionTitle.textContent = t("viewTitle");
       positionGroup.appendChild(positionTitle);
