@@ -1,9 +1,9 @@
-const CACHE_VERSION = "ar-planets-shell-v2";
+const CACHE_VERSION = "ar-planets-shell-v3";
 const APP_SHELL = [
   "./",
   "./index.html",
-  "./style.css?v=mobile-compact-2",
-  "./main.js?v=mobile-compact-2",
+  "./style.css?v=mobile-no-controls-1",
+  "./main.js?v=mobile-no-controls-1",
   "./manifest.webmanifest",
   "./app-icon.svg"
 ];
