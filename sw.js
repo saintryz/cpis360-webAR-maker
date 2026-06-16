@@ -1,9 +1,9 @@
-const CACHE_VERSION = "ar-planets-shell-v1";
+const CACHE_VERSION = "ar-planets-shell-v2";
 const APP_SHELL = [
   "./",
   "./index.html",
-  "./style.css",
-  "./main.js",
+  "./style.css?v=mobile-compact-2",
+  "./main.js?v=mobile-compact-2",
   "./manifest.webmanifest",
   "./app-icon.svg"
 ];
@@ -39,18 +39,14 @@ self.addEventListener("fetch", (event) => {
   }
 
   event.respondWith(
-    caches.match(request).then((cached) => {
-      const network = fetch(request)
-        .then((response) => {
-          if (response && response.ok) {
-            const copy = response.clone();
-            caches.open(CACHE_VERSION).then((cache) => cache.put(request, copy));
-          }
-          return response;
-        })
-        .catch(() => cached);
-
-      return cached || network;
-    })
+    fetch(request)
+      .then((response) => {
+        if (response && response.ok) {
+          const copy = response.clone();
+          caches.open(CACHE_VERSION).then((cache) => cache.put(request, copy));
+        }
+        return response;
+      })
+      .catch(() => caches.match(request))
   );
 });

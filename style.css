@@ -1975,17 +1975,19 @@ summary.control-section-title::after {
 @media (max-width: 600px) {
   .control-panel {
     top: auto;
-    left: calc(10px + var(--safe-left));
-    right: calc(10px + var(--safe-right));
-    bottom: calc(70px + var(--safe-bottom));
+    left: calc(12px + var(--safe-left));
+    right: calc(12px + var(--safe-right));
+    bottom: calc(76px + var(--safe-bottom));
     width: auto;
-    max-height: min(40vh, 300px);
-    padding: 10px;
+    max-height: min(24vh, 180px);
+    padding: 8px;
     grid-template-columns: max-content minmax(0, 1fr);
     align-items: start;
-    gap: var(--space-2);
+    gap: 6px;
     overflow-y: auto;
-    border-radius: 14px;
+    border-radius: 12px;
+    background: rgba(7, 8, 18, 0.58);
+    box-shadow: 0 10px 24px rgba(0, 0, 0, 0.34);
   }
 
   .control-row {
@@ -2000,7 +2002,7 @@ summary.control-section-title::after {
   }
 
   .control-pause-row .control-button {
-    min-width: 96px;
+    min-width: 88px;
   }
 
   .control-speed-row {
@@ -2025,7 +2027,7 @@ summary.control-section-title::after {
 
   .control-button {
     min-height: var(--target-min);
-    padding: 9px 10px;
+    padding: 8px 9px;
     font-size: 0.8125rem;
   }
 
@@ -2040,13 +2042,13 @@ summary.control-section-title::after {
   }
 
   .view-controls[open] {
-    gap: var(--space-2);
-    padding-bottom: 10px;
+    gap: 6px;
+    padding-bottom: 8px;
   }
 
   .view-controls[open] > .control-view-row,
   .view-controls[open] > .control-view-reset-row {
-    margin-inline: 10px;
+    margin-inline: 8px;
   }
 
   .control-view-row {
@@ -2055,11 +2057,17 @@ summary.control-section-title::after {
 
   .control-view-reset-row .control-button {
     justify-self: start;
-    min-width: 124px;
+    min-width: 112px;
   }
 
   .control-row-toggles {
-    grid-template-columns: repeat(2, minmax(0, 1fr));
+    grid-template-columns: repeat(4, minmax(0, 1fr));
+  }
+
+  .control-row-toggles .control-button {
+    padding-inline: 6px;
+    font-size: clamp(0.7rem, 2.5vw, 0.8125rem);
+    line-height: 1.12;
   }
 
   .planet-info {
