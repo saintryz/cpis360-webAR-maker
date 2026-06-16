@@ -21,6 +21,7 @@
   const I18N = {
     en: {
       pageTitle: "AR Planetary System Visualizer",
+      appToolbarAria: "Application controls",
       loadingText: "Starting AR camera...",
       loadingHint: "If your browser asks, allow camera access.",
       onboardingTitle: "Welcome, space explorer!",
@@ -119,6 +120,17 @@
       tabCompare: "Compare",
       tabSimulator: "Simulator",
       tabLearn: "Learn",
+      tabLearnHub: "Learn",
+      tabProgressHub: "Progress",
+      tabToolsHub: "Tools",
+      toolCompare: "Compare",
+      toolSimulator: "Simulator",
+      toolSources: "Sources",
+      toolProject: "Project",
+      loadingAssets: "Loading 3D assets",
+      loadingAssetName: (name) => `Loading ${name}`,
+      loadingAssetProgress: (percent) => `${percent}%`,
+      loadingAssetComplete: "3D assets ready",
       progressDiscovered: "Discovered",
       progressQuizzes: "Quizzes",
       progressAccuracy: "Accuracy",
@@ -238,6 +250,7 @@
     },
     ar: {
       pageTitle: "عارض النظام الكوكبي بالواقع المعزز",
+      appToolbarAria: "أدوات التطبيق",
       loadingText: "جارٍ تشغيل كاميرا الواقع المعزز...",
       loadingHint: "إذا طلب المتصفح الإذن، اسمح باستخدام الكاميرا.",
       onboardingTitle: "أهلًا يا مستكشف الفضاء!",
@@ -336,6 +349,17 @@
       tabCompare: "المقارنة",
       tabSimulator: "المحاكي",
       tabLearn: "التعلم",
+      tabLearnHub: "التعلم",
+      tabProgressHub: "التقدم",
+      tabToolsHub: "الأدوات",
+      toolCompare: "المقارنة",
+      toolSimulator: "المحاكي",
+      toolSources: "المصادر",
+      toolProject: "المشروع",
+      loadingAssets: "تحميل النماذج ثلاثية الأبعاد",
+      loadingAssetName: (name) => `تحميل ${name}`,
+      loadingAssetProgress: (percent) => `${percent}%`,
+      loadingAssetComplete: "النماذج ثلاثية الأبعاد جاهزة",
       progressDiscovered: "المكتشفة",
       progressQuizzes: "الاختبارات",
       progressAccuracy: "الدقة",
@@ -1354,14 +1378,9 @@
   const PROGRESS_STORAGE_KEY = "arPlanetaryProgress.v1";
   const MISSION_BONUS_POINTS = 50;
   const MISSION_CONTROL_TABS = [
-    { id: "lesson", labelKey: "tabLesson" },
-    { id: "overview", labelKey: "tabOverview" },
-    { id: "project", labelKey: "tabProject" },
-    { id: "missions", labelKey: "tabMissions" },
-    { id: "badges", labelKey: "tabBadges" },
-    { id: "compare", labelKey: "tabCompare" },
-    { id: "simulator", labelKey: "tabSimulator" },
-    { id: "learn", labelKey: "tabLearn" }
+    { id: "learnHub", labelKey: "tabLearnHub" },
+    { id: "progressHub", labelKey: "tabProgressHub" },
+    { id: "toolsHub", labelKey: "tabToolsHub" }
   ];
   const GUIDED_MISSIONS = [
     {
@@ -1486,13 +1505,54 @@
     url: mission.sourceUrl
   }));
   let missionControlUi = null;
-  let missionControlActiveTab = "lesson";
+  let missionControlActiveTab = "learnHub";
+  let missionToolsActivePanel = "compare";
   let missionCompareSelection = { first: "solar:Earth", second: "solar:Mars" };
   let activeSimulationId = "artemis-ii";
   let missionSimulator = null;
   const MODEL_LOAD_STAGGER_MS = IS_LOW_POWER ? 650 : 180;
   const modelLoadQueue = [];
+  const modelLoadStats = {
+    queued: 0,
+    active: 0,
+    complete: 0,
+    activeRatio: 0,
+    label: ""
+  };
+  let modelProgressUi = null;
+  let modelProgressHideTimer = 0;
   let modelLoadActive = false;
+
+  const getModelLoadPercent = () => {
+    const total = modelLoadStats.queued + modelLoadStats.active + modelLoadStats.complete;
+    if (!total) {
+      return 0;
+    }
+    const loaded = modelLoadStats.complete + (modelLoadStats.active ? modelLoadStats.activeRatio : 0);
+    return Math.max(0, Math.min(100, Math.round((loaded / total) * 100)));
+  };
+
+  const emitModelLoadProgress = () => {
+    window.dispatchEvent(new CustomEvent("modelLoadProgress", {
+      detail: {
+        active: modelLoadStats.queued + modelLoadStats.active > 0,
+        queued: modelLoadStats.queued,
+        complete: modelLoadStats.complete,
+        percent: getModelLoadPercent(),
+        label: modelLoadStats.label
+      }
+    }));
+  };
+
+  const reportModelLoadProgress = (loaded, total, label) => {
+    if (label) {
+      modelLoadStats.label = label;
+    }
+    if (total && total > 0) {
+      modelLoadStats.activeRatio = Math.max(0, Math.min(0.98, loaded / total));
+    }
+    emitModelLoadProgress();
+  };
 
   const runNextModelLoad = () => {
     if (modelLoadActive || modelLoadQueue.length === 0) {
@@ -1500,15 +1560,29 @@
     }
 
     modelLoadActive = true;
-    const task = modelLoadQueue.shift();
+    const item = modelLoadQueue.shift();
+    modelLoadStats.queued = Math.max(0, modelLoadStats.queued - 1);
+    modelLoadStats.active = 1;
+    modelLoadStats.activeRatio = 0;
+    modelLoadStats.label = item.label || "";
+    emitModelLoadProgress();
+    let finished = false;
     const finish = () => {
+      if (finished) {
+        return;
+      }
+      finished = true;
       modelLoadActive = false;
+      modelLoadStats.active = 0;
+      modelLoadStats.activeRatio = 1;
+      modelLoadStats.complete += 1;
+      emitModelLoadProgress();
       window.setTimeout(runNextModelLoad, MODEL_LOAD_STAGGER_MS);
     };
 
     window.setTimeout(() => {
       try {
-        task(finish);
+        item.run(finish);
       } catch (err) {
         console.warn("Model load task failed:", err);
         finish();
@@ -1516,12 +1590,16 @@
     }, MODEL_LOAD_STAGGER_MS);
   };
 
-  const enqueueModelLoad = (task, priority) => {
+  const enqueueModelLoad = (task, priority, label) => {
+    const item = { run: task, label: label || t("loadingAssets") };
     if (priority) {
-      modelLoadQueue.unshift(task);
+      modelLoadQueue.unshift(item);
     } else {
-      modelLoadQueue.push(task);
+      modelLoadQueue.push(item);
     }
+    modelLoadStats.queued += 1;
+    modelLoadStats.label = item.label;
+    emitModelLoadProgress();
     runNextModelLoad();
   };
 
@@ -2402,7 +2480,7 @@
           planetState.modelLoading = false;
           finish();
         });
-      }, priority);
+      }, priority, getTranslatedBodyName(planetData.name));
     },
 
     shouldSkipPlanetModel: function (planetData, priority) {
@@ -2491,11 +2569,15 @@
     },
 
     loadGltfModel: function (loader, url, options, onLoad, onError) {
+      const label = options && options.name ? getTranslatedBodyName(options.name) : t("loadingAssets");
       if (!options || !options.patchSpecGloss) {
-        loader.load(url, onLoad, undefined, onError);
+        loader.load(url, onLoad, (event) => {
+          reportModelLoadProgress(event.loaded, event.total, label);
+        }, onError);
         return;
       }
 
+      reportModelLoadProgress(12, 100, label);
       fetch(url)
         .then((response) => {
           if (!response.ok) {
@@ -2503,7 +2585,15 @@
           }
           return response.arrayBuffer();
         })
+        .then((buffer) => {
+          reportModelLoadProgress(68, 100, label);
+          return buffer;
+        })
         .then((buffer) => this.patchSpecGlossGlb(buffer))
+        .then((buffer) => {
+          reportModelLoadProgress(88, 100, label);
+          return buffer;
+        })
         .then((buffer) => {
           loader.parse(buffer, this.getModelBasePath(url), onLoad, onError);
         })
@@ -3110,7 +3200,7 @@
           shipState.modelLoading = false;
           finish();
         });
-      }, priority);
+      }, priority, getTranslatedBodyName(shipDef.info && shipDef.info.name ? shipDef.info.name : shipDef.name));
     },
 
     shouldSkipShipModel: function (shipDef, priority) {
@@ -3175,7 +3265,9 @@
           this.root.add(model);
           finish();
         },
-        undefined,
+        (event) => {
+          reportModelLoadProgress(event.loaded, event.total, getTranslatedBodyName(shipDef.info && shipDef.info.name ? shipDef.info.name : shipDef.name));
+        },
         (err) => {
           console.warn(`Failed to load ${shipDef.name} model from ${shipDef.modelUrl}:`, err);
           // Procedural mesh remains visible — no further action needed.
@@ -5682,16 +5774,17 @@
     entries.forEach((entry, index) => {
       const row = document.createElement("tr");
       const cells = [
-        `#${index + 1}`,
-        entry.playerName,
-        t("pointsUnit", entry.score),
-        getTranslatedBodyName(entry.bodyName),
-        getSystemDisplayName(entry.systemKey),
-        `${entry.accuracy}%`,
-        formatLeaderboardDate(entry.savedAt)
+        [t("leaderboardRank"), `#${index + 1}`],
+        [t("leaderboardPlayer"), entry.playerName],
+        [t("leaderboardScore"), t("pointsUnit", entry.score)],
+        [t("leaderboardBody"), getTranslatedBodyName(entry.bodyName)],
+        [t("leaderboardSystem"), getSystemDisplayName(entry.systemKey)],
+        [t("leaderboardAccuracy"), `${entry.accuracy}%`],
+        [t("leaderboardDate"), formatLeaderboardDate(entry.savedAt)]
       ];
-      for (const cellText of cells) {
+      for (const [label, cellText] of cells) {
         const cell = document.createElement("td");
+        cell.setAttribute("data-label", label);
         cell.textContent = cellText;
         row.appendChild(cell);
       }
@@ -5948,6 +6041,30 @@
     renderMissionControlDashboard();
   };
 
+  const switchMissionToolPanel = (panelId) => {
+    missionToolsActivePanel = panelId;
+    missionControlActiveTab = "toolsHub";
+    renderMissionControlDashboard();
+  };
+
+  const createMissionSubtabs = (items, activeId, onChange) => {
+    const tabs = document.createElement("div");
+    tabs.className = "mission-subtabs";
+    tabs.setAttribute("role", "tablist");
+    for (const item of items) {
+      const button = document.createElement("button");
+      button.type = "button";
+      button.className = "mission-subtab-button";
+      button.classList.toggle("is-active", item.id === activeId);
+      button.textContent = t(item.labelKey);
+      button.setAttribute("role", "tab");
+      button.setAttribute("aria-selected", item.id === activeId ? "true" : "false");
+      button.addEventListener("click", () => onChange(item.id));
+      tabs.appendChild(button);
+    }
+    return tabs;
+  };
+
   const createLessonStep = (config) => {
     const card = document.createElement("article");
     card.className = "lesson-step-card";
@@ -6049,21 +6166,21 @@
         textKey: "lessonStepMissionText",
         actionKey: "lessonActionMissions",
         done: hasMission || hasQuiz,
-        onAction: () => switchMissionControlTab("missions")
+        onAction: () => switchMissionControlTab("progressHub")
       },
       {
         titleKey: "lessonStepCompareTitle",
         textKey: "lessonStepCompareText",
         actionKey: "lessonActionCompare",
         done: discoveredCount >= 2,
-        onAction: () => switchMissionControlTab("compare")
+        onAction: () => switchMissionToolPanel("compare")
       },
       {
         titleKey: "lessonStepSimTitle",
         textKey: "lessonStepSimText",
         actionKey: "lessonActionSim",
         done: hasSavedScore || progress.badges.length > 0,
-        onAction: () => switchMissionControlTab("simulator")
+        onAction: () => switchMissionToolPanel("simulator")
       }
     ];
     configs.forEach((config, index) => {
@@ -6076,7 +6193,7 @@
     sourcesButton.type = "button";
     sourcesButton.className = "lesson-secondary-action";
     sourcesButton.textContent = t("lessonActionLearn");
-    sourcesButton.addEventListener("click", () => switchMissionControlTab("learn"));
+    sourcesButton.addEventListener("click", () => switchMissionToolPanel("sources"));
     content.appendChild(sourcesButton);
   };
 
@@ -6257,8 +6374,11 @@
     const tbody = document.createElement("tbody");
     for (const rowData of rows) {
       const row = document.createElement("tr");
-      for (const cellData of rowData) {
+      const labels = [t("compareMetric"), getTranslatedBodyName(first.data.name), getTranslatedBodyName(second.data.name)];
+      for (let index = 0; index < rowData.length; index += 1) {
+        const cellData = rowData[index];
         const cell = document.createElement("td");
+        cell.setAttribute("data-label", labels[index]);
         cell.textContent = cellData === undefined || cellData === null || cellData === "" ? "—" : cellData;
         row.appendChild(cell);
       }
@@ -6432,6 +6552,46 @@
     content.appendChild(wrap);
   };
 
+  const renderMissionLearnHub = (content, progress) => {
+    renderGuidedJourney(content, progress);
+  };
+
+  const renderMissionProgressHub = (content, progress) => {
+    renderMissionOverview(content, progress);
+
+    const badgesTitle = document.createElement("h3");
+    badgesTitle.className = "mission-section-title";
+    badgesTitle.textContent = t("tabBadges");
+    content.appendChild(badgesTitle);
+    renderBadges(content, progress);
+  };
+
+  const renderMissionToolsHub = (content) => {
+    const panels = [
+      { id: "compare", labelKey: "toolCompare" },
+      { id: "simulator", labelKey: "toolSimulator" },
+      { id: "sources", labelKey: "toolSources" },
+      { id: "project", labelKey: "toolProject" }
+    ];
+    if (!panels.some((panel) => panel.id === missionToolsActivePanel)) {
+      missionToolsActivePanel = "compare";
+    }
+    content.appendChild(createMissionSubtabs(panels, missionToolsActivePanel, (panelId) => {
+      missionToolsActivePanel = panelId;
+      renderMissionControlDashboard();
+    }));
+
+    if (missionToolsActivePanel === "simulator") {
+      renderSimulator(content);
+    } else if (missionToolsActivePanel === "sources") {
+      renderLearning(content);
+    } else if (missionToolsActivePanel === "project") {
+      renderProjectBrief(content);
+    } else {
+      renderComparison(content);
+    }
+  };
+
   const renderMissionControlDashboard = () => {
     if (!missionControlUi) return;
     const progress = readProgress();
@@ -6441,26 +6601,18 @@
     for (const tab of missionControlUi.tabs) {
       tab.button.textContent = t(tab.labelKey);
       tab.button.classList.toggle("is-active", tab.id === missionControlActiveTab);
+      tab.button.setAttribute("aria-selected", tab.id === missionControlActiveTab ? "true" : "false");
+      tab.button.tabIndex = tab.id === missionControlActiveTab ? 0 : -1;
     }
 
     clearElement(missionControlUi.content);
     stopMissionSimulation();
-    if (missionControlActiveTab === "lesson") {
-      renderGuidedJourney(missionControlUi.content, progress);
-    } else if (missionControlActiveTab === "overview") {
-      renderMissionOverview(missionControlUi.content, progress);
-    } else if (missionControlActiveTab === "project") {
-      renderProjectBrief(missionControlUi.content);
-    } else if (missionControlActiveTab === "missions") {
-      renderMissionList(missionControlUi.content, progress);
-    } else if (missionControlActiveTab === "badges") {
-      renderBadges(missionControlUi.content, progress);
-    } else if (missionControlActiveTab === "compare") {
-      renderComparison(missionControlUi.content);
-    } else if (missionControlActiveTab === "simulator") {
-      renderSimulator(missionControlUi.content);
+    if (missionControlActiveTab === "learnHub") {
+      renderMissionLearnHub(missionControlUi.content, progress);
+    } else if (missionControlActiveTab === "progressHub") {
+      renderMissionProgressHub(missionControlUi.content, progress);
     } else {
-      renderLearning(missionControlUi.content);
+      renderMissionToolsHub(missionControlUi.content);
     }
   };
 
@@ -6493,13 +6645,27 @@
 
     const tabs = document.createElement("div");
     tabs.className = "mission-tabs";
+    tabs.setAttribute("role", "tablist");
     const tabRefs = MISSION_CONTROL_TABS.map((tab) => {
       const tabButton = document.createElement("button");
       tabButton.type = "button";
       tabButton.className = "mission-tab-button";
+      tabButton.setAttribute("role", "tab");
       tabButton.addEventListener("click", () => {
         missionControlActiveTab = tab.id;
         renderMissionControlDashboard();
+      });
+      tabButton.addEventListener("keydown", (event) => {
+        if (event.key !== "ArrowRight" && event.key !== "ArrowLeft") {
+          return;
+        }
+        event.preventDefault();
+        const direction = event.key === "ArrowRight" ? 1 : -1;
+        const currentIndex = MISSION_CONTROL_TABS.findIndex((item) => item.id === missionControlActiveTab);
+        const nextIndex = (currentIndex + direction + MISSION_CONTROL_TABS.length) % MISSION_CONTROL_TABS.length;
+        missionControlActiveTab = MISSION_CONTROL_TABS[nextIndex].id;
+        renderMissionControlDashboard();
+        tabRefs[nextIndex].button.focus();
       });
       tabs.appendChild(tabButton);
       return Object.assign({ button: tabButton }, tab);
@@ -6507,6 +6673,7 @@
 
     const content = document.createElement("div");
     content.className = "mission-control-content";
+    content.setAttribute("role", "tabpanel");
 
     card.appendChild(header);
     card.appendChild(tabs);
@@ -6526,7 +6693,16 @@
 
     const open = (tabId) => {
       if (tabId) {
-        missionControlActiveTab = tabId;
+        if (tabId === "lesson") {
+          missionControlActiveTab = "learnHub";
+        } else if (tabId === "missions" || tabId === "overview" || tabId === "badges") {
+          missionControlActiveTab = "progressHub";
+        } else if (tabId === "compare" || tabId === "simulator" || tabId === "learn" || tabId === "project") {
+          missionControlActiveTab = "toolsHub";
+          missionToolsActivePanel = tabId === "learn" ? "sources" : tabId;
+        } else {
+          missionControlActiveTab = tabId;
+        }
       }
       renderMissionControlDashboard();
       overlay.hidden = false;
@@ -6639,6 +6815,84 @@
     } else {
       window.setTimeout(hideLoading, 1200);
     }
+  };
+
+  const setupAssetProgressIndicator = () => {
+    const loadingScreen = document.getElementById("loadingScreen");
+    const loadingProgressBar = document.getElementById("loadingProgressBar");
+    const loadingProgressText = document.getElementById("loadingProgressText");
+    const panel = document.createElement("div");
+    panel.className = "asset-progress";
+    panel.hidden = true;
+    panel.setAttribute("role", "status");
+    panel.setAttribute("aria-live", "polite");
+
+    const row = document.createElement("div");
+    row.className = "asset-progress-row";
+    const label = document.createElement("span");
+    const value = document.createElement("span");
+    value.className = "asset-progress-value";
+    row.appendChild(label);
+    row.appendChild(value);
+
+    const track = document.createElement("div");
+    track.className = "asset-progress-track";
+    const bar = document.createElement("span");
+    bar.className = "asset-progress-bar";
+    track.appendChild(bar);
+    panel.appendChild(row);
+    panel.appendChild(track);
+    document.body.appendChild(panel);
+
+    modelProgressUi = { panel, label, value, bar, loadingScreen, loadingProgressBar, loadingProgressText };
+
+    const renderProgress = (detail) => {
+      const percent = detail && typeof detail.percent === "number" ? detail.percent : getModelLoadPercent();
+      const isActive = Boolean(detail && detail.active);
+      const assetLabel = detail && detail.label ? t("loadingAssetName", detail.label) : t("loadingAssets");
+      const text = isActive ? assetLabel : t("loadingAssetComplete");
+      const valueText = isActive ? t("loadingAssetProgress", percent) : t("loadingAssetProgress", 100);
+      const width = `${isActive ? Math.max(6, percent) : 100}%`;
+
+      label.textContent = text;
+      value.textContent = valueText;
+      bar.style.width = width;
+      if (loadingProgressBar) {
+        loadingProgressBar.style.width = width;
+      }
+      if (loadingProgressText) {
+        loadingProgressText.textContent = isActive ? `${text} · ${valueText}` : t("loadingAssets");
+      }
+      if (loadingScreen) {
+        loadingScreen.classList.toggle("is-model-loading", isActive);
+      }
+
+      window.clearTimeout(modelProgressHideTimer);
+      const loadingVisible = loadingScreen && !loadingScreen.hidden && !loadingScreen.classList.contains("is-hidden");
+      if (isActive && !loadingVisible) {
+        panel.hidden = false;
+      } else if (!isActive) {
+        modelProgressHideTimer = window.setTimeout(() => {
+          panel.hidden = true;
+        }, 900);
+      } else {
+        panel.hidden = true;
+      }
+    };
+
+    window.addEventListener("modelLoadProgress", (event) => renderProgress(event.detail));
+    window.addEventListener("languageChanged", () => {
+      renderProgress({
+        active: modelLoadStats.queued + modelLoadStats.active > 0,
+        percent: getModelLoadPercent(),
+        label: modelLoadStats.label
+      });
+    });
+    renderProgress({
+      active: modelLoadStats.queued + modelLoadStats.active > 0,
+      percent: getModelLoadPercent(),
+      label: modelLoadStats.label
+    });
   };
 
   function stopMissionSimulation() {
@@ -7059,6 +7313,9 @@
 
     setText(".loading-text", "loadingText");
     setText(".loading-hint", "loadingHint");
+    setText("#loadingProgressText", "loadingAssets");
+    const toolbar = document.querySelector(".app-toolbar");
+    if (toolbar) toolbar.setAttribute("aria-label", t("appToolbarAria"));
     setText("#onboardingTitle", "onboardingTitle");
     setText(".onboarding-intro", "onboardingIntro");
     setHtml(".onboarding-steps li:nth-child(1)", "onboardingStep1");
@@ -7129,6 +7386,7 @@
   };
 
   const ready = () => {
+    setupAssetProgressIndicator();
     setupLeaderboardDashboard();
     setupMissionControlDashboard();
     setupLanguageSwitcher();

@@ -6,6 +6,23 @@
   --safe-right: env(safe-area-inset-right, 0px);
   --safe-bottom: env(safe-area-inset-bottom, 0px);
   --safe-left: env(safe-area-inset-left, 0px);
+  --space-1: 4px;
+  --space-2: 8px;
+  --space-3: 12px;
+  --space-4: 16px;
+  --space-5: 24px;
+  --space-6: 32px;
+  --target-min: 44px;
+  --target-primary: 48px;
+  --radius-sm: 8px;
+  --radius-md: 10px;
+  --radius-lg: 12px;
+  --radius-xl: 14px;
+  --focus-color: #8ee6b8;
+  --focus-shadow: 0 0 0 3px rgba(142, 230, 184, 0.24);
+  --surface-panel: rgba(7, 8, 18, 0.72);
+  --surface-card: rgba(255, 255, 255, 0.045);
+  --line-soft: rgba(255, 255, 255, 0.12);
 }
 
 @supports (height: 100dvh) {
@@ -24,10 +41,34 @@ body {
   font-family: system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
 }
 
+*,
+*::before,
+*::after {
+  box-sizing: border-box;
+}
+
 body {
   position: fixed;
   inset: 0;
   min-height: var(--viewport-height);
+}
+
+button,
+input,
+select,
+textarea {
+  font: inherit;
+}
+
+button,
+input,
+select,
+a {
+  -webkit-tap-highlight-color: rgba(142, 230, 184, 0.18);
+}
+
+button {
+  touch-action: manipulation;
 }
 
 a-scene,
@@ -80,7 +121,7 @@ a-scene .a-canvas,
   display: grid;
   place-items: center;
   align-content: center;
-  gap: 10px;
+  gap: var(--space-3);
   padding: calc(24px + var(--safe-top)) calc(24px + var(--safe-right)) calc(24px + var(--safe-bottom)) calc(24px + var(--safe-left));
   color: rgba(255, 255, 255, 0.94);
   background: radial-gradient(circle at 50% 35%, rgba(30, 90, 190, 0.28), rgba(0, 0, 0, 0.94) 62%);
@@ -120,9 +161,59 @@ a-scene .a-canvas,
   line-height: 1.4;
 }
 
+.loading-progress {
+  width: min(320px, 80vw);
+  margin-top: var(--space-2);
+  display: grid;
+  gap: var(--space-2);
+}
+
+.loading-progress-track {
+  height: 8px;
+  overflow: hidden;
+  border-radius: 999px;
+  background: rgba(255, 255, 255, 0.13);
+  box-shadow: inset 0 0 0 1px rgba(255, 255, 255, 0.06);
+}
+
+.loading-progress-bar {
+  width: 34%;
+  height: 100%;
+  display: block;
+  border-radius: inherit;
+  background: linear-gradient(90deg, #64b5ff, #8ee6b8);
+  transition: width 220ms ease;
+  animation: loading-progress-pulse 1400ms ease-in-out infinite;
+}
+
+.loading-screen.is-model-loading .loading-progress-bar {
+  animation: none;
+}
+
+.loading-progress-text {
+  margin: 0;
+  color: rgba(255, 255, 255, 0.72);
+  font-size: 0.875rem;
+  line-height: 1.35;
+}
+
 @keyframes spin {
   to {
     transform: rotate(360deg);
+  }
+}
+
+@keyframes loading-progress-pulse {
+  0% {
+    transform: translateX(-90%);
+  }
+
+  50% {
+    transform: translateX(0);
+  }
+
+  100% {
+    transform: translateX(210%);
   }
 }
 
@@ -201,7 +292,7 @@ a-scene .a-canvas,
 .onboarding-marker-tag,
 .onboarding-marker-download {
   color: rgba(255, 255, 255, 0.62);
-  font-size: 0.74rem;
+  font-size: 0.8125rem;
   font-weight: 800;
 }
 
@@ -214,7 +305,7 @@ a-scene .a-canvas,
   bottom: 0;
   z-index: 1;
   width: 100%;
-  min-height: 44px;
+  min-height: var(--target-primary);
   border: 1px solid rgba(255, 255, 255, 0.12);
   border-radius: 10px;
   color: #ffffff;
@@ -288,10 +379,10 @@ a-scene .a-canvas,
 
 .planet-info-name {
   margin: 0 0 10px;
-  padding-right: 36px;
+  padding-inline-end: 48px;
   font-size: 1.15rem;
   font-weight: 700;
-  letter-spacing: 0.01em;
+  letter-spacing: 0;
   color: #ffffff;
 }
 
@@ -335,7 +426,7 @@ a-scene .a-canvas,
 
 .planet-info-figure-caption {
   color: rgba(255, 255, 255, 0.62);
-  font-size: 0.78rem;
+  font-size: 0.8125rem;
   font-weight: 700;
 }
 
@@ -370,7 +461,7 @@ a-scene .a-canvas,
 .planet-info-stats dd {
   margin: 0;
   color: rgba(255, 255, 255, 0.95);
-  text-align: right;
+  text-align: end;
   word-break: break-word;
 }
 
@@ -384,14 +475,14 @@ a-scene .a-canvas,
 }
 
 .planet-info-actions {
-  margin-top: 14px;
+  margin-top: var(--space-4);
   display: grid;
   grid-template-columns: repeat(3, minmax(0, 1fr));
-  gap: 10px;
+  gap: var(--space-3);
 }
 
 .planet-action-button {
-  min-height: 42px;
+  min-height: var(--target-min);
   border: 1px solid rgba(255, 255, 255, 0.14);
   border-radius: 10px;
   color: rgba(255, 255, 255, 0.94);
@@ -408,7 +499,7 @@ a-scene .a-canvas,
 
 .planet-action-button:disabled {
   cursor: not-allowed;
-  opacity: 0.5;
+  opacity: 0.62;
 }
 
 .planet-speak-button {
@@ -440,7 +531,7 @@ a-scene .a-canvas,
 .planet-quiz-progress {
   margin: 0;
   color: rgba(255, 255, 255, 0.62);
-  font-size: 0.78rem;
+  font-size: 0.8125rem;
   font-weight: 700;
   text-transform: uppercase;
 }
@@ -455,7 +546,7 @@ a-scene .a-canvas,
 .planet-quiz-question {
   margin: 0 0 8px;
   color: rgba(255, 255, 255, 0.88);
-  font-size: 0.84rem;
+  font-size: 0.9rem;
   font-weight: 700;
 }
 
@@ -466,14 +557,14 @@ a-scene .a-canvas,
 }
 
 .planet-quiz-choice {
-  min-height: 38px;
-  padding: 7px 8px;
+  min-height: var(--target-min);
+  padding: 9px 10px;
   border: 1px solid rgba(255, 255, 255, 0.12);
   border-radius: 8px;
   color: rgba(255, 255, 255, 0.94);
   background: rgba(255, 255, 255, 0.08);
   font: inherit;
-  font-size: 0.74rem;
+  font-size: 0.8125rem;
   line-height: 1.2;
   cursor: pointer;
   overflow-wrap: anywhere;
@@ -540,13 +631,13 @@ a-scene .a-canvas,
 
 .planet-quiz-score-row dt {
   color: rgba(255, 255, 255, 0.7);
-  font-size: 0.76rem;
+  font-size: 0.8125rem;
   font-weight: 700;
 }
 
 .planet-quiz-score-row dd {
   color: #ffffff;
-  font-size: 0.78rem;
+  font-size: 0.8125rem;
   font-weight: 800;
   font-variant-numeric: tabular-nums;
   text-align: end;
@@ -567,7 +658,7 @@ a-scene .a-canvas,
 .planet-quiz-save-title {
   margin: 0 0 8px !important;
   color: #ffffff;
-  font-size: 0.84rem;
+  font-size: 0.9rem;
   font-weight: 800;
 }
 
@@ -580,27 +671,25 @@ a-scene .a-canvas,
 .planet-quiz-save-label {
   grid-column: 1 / -1;
   color: rgba(255, 255, 255, 0.64);
-  font-size: 0.74rem;
+  font-size: 0.8125rem;
   font-weight: 700;
   text-align: start;
 }
 
 .planet-quiz-save-input {
   min-width: 0;
-  min-height: 38px;
-  padding: 8px 10px;
+  min-height: var(--target-min);
+  padding: 10px 12px;
   border: 1px solid rgba(255, 255, 255, 0.15);
   border-radius: 8px;
   color: rgba(255, 255, 255, 0.94);
   background: rgba(0, 0, 0, 0.22);
-  font: inherit;
-  font-size: 0.82rem;
+  font-size: 0.875rem;
   box-sizing: border-box;
 }
 
 .planet-quiz-save-input:focus {
   border-color: rgba(110, 168, 255, 0.8);
-  outline: none;
 }
 
 .planet-quiz-save-input.is-invalid {
@@ -608,14 +697,13 @@ a-scene .a-canvas,
 }
 
 .planet-quiz-save-button {
-  min-height: 38px;
-  padding: 8px 12px;
+  min-height: var(--target-min);
+  padding: 10px 14px;
   border: 1px solid rgba(255, 255, 255, 0.12);
   border-radius: 8px;
   color: #ffffff;
   background: rgba(30, 90, 190, 0.82);
-  font: inherit;
-  font-size: 0.8rem;
+  font-size: 0.875rem;
   font-weight: 800;
   cursor: pointer;
 }
@@ -629,22 +717,22 @@ a-scene .a-canvas,
   min-height: 1em;
   margin: 0 !important;
   color: rgba(255, 255, 255, 0.7);
-  font-size: 0.74rem;
+  font-size: 0.8125rem;
   text-align: start;
 }
 
 .planet-info-close {
   position: absolute;
   top: 8px;
-  right: 8px;
-  width: 34px;
-  height: 34px;
+  inset-inline-end: 8px;
+  width: var(--target-min);
+  height: var(--target-min);
   padding: 0;
   border: none;
   border-radius: 50%;
   color: rgba(255, 255, 255, 0.9);
   background: rgba(255, 255, 255, 0.1);
-  font-size: 1.35rem;
+  font-size: 1.5rem;
   line-height: 1;
   cursor: pointer;
   display: flex;
@@ -655,7 +743,28 @@ a-scene .a-canvas,
 .planet-info-close:hover,
 .planet-info-close:focus-visible {
   background: rgba(255, 255, 255, 0.2);
-  outline: none;
+}
+
+.app-toolbar {
+  position: fixed;
+  top: calc(14px + var(--safe-top));
+  left: calc(14px + var(--safe-left));
+  right: calc(14px + var(--safe-right));
+  z-index: 25;
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: var(--space-3);
+  pointer-events: none;
+}
+
+.app-toolbar-main {
+  min-width: 0;
+  max-width: calc(100vw - 92px - var(--safe-left) - var(--safe-right));
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-2);
+  pointer-events: auto;
 }
 
 .system-switch-button,
@@ -663,76 +772,36 @@ a-scene .a-canvas,
 .leaderboard-button,
 .mission-control-button,
 .help-button {
-  position: fixed;
-  top: calc(14px + var(--safe-top));
-  left: calc(14px + var(--safe-left));
-  z-index: 25;
+  position: static;
+  min-height: var(--target-min);
   display: inline-flex;
   align-items: center;
-  gap: 6px;
-  padding: 9px 14px;
+  justify-content: center;
+  gap: var(--space-2);
+  padding: 10px 15px;
   border: 1px solid rgba(255, 255, 255, 0.18);
   border-radius: 999px;
   color: rgba(255, 255, 255, 0.95);
-  background: rgba(7, 8, 18, 0.7);
+  background: var(--surface-panel);
   backdrop-filter: blur(12px);
   -webkit-backdrop-filter: blur(12px);
   box-shadow: 0 8px 22px rgba(0, 0, 0, 0.4);
-  font: inherit;
-  font-size: 0.86rem;
+  font-size: 0.875rem;
   font-weight: 600;
-  letter-spacing: 0.01em;
+  letter-spacing: 0;
   cursor: pointer;
   transition: background 160ms ease, transform 160ms ease;
 }
 
-.language-switch-button {
-  left: 152px;
-}
-
-.leaderboard-button {
-  left: 260px;
-}
-
-.mission-control-button {
-  left: 430px;
-}
-
 .help-button {
-  left: auto;
-  right: calc(14px + var(--safe-right));
-  width: 38px;
-  height: 38px;
+  flex: 0 0 auto;
+  width: var(--target-min);
+  height: var(--target-min);
   padding: 0;
-  justify-content: center;
   border-radius: 50%;
   font-size: 1rem;
   font-weight: 900;
-}
-
-html[dir="rtl"] .system-switch-button {
-  left: auto;
-  right: calc(14px + var(--safe-right));
-}
-
-html[dir="rtl"] .language-switch-button {
-  left: auto;
-  right: 152px;
-}
-
-html[dir="rtl"] .leaderboard-button {
-  left: auto;
-  right: 260px;
-}
-
-html[dir="rtl"] .mission-control-button {
-  left: auto;
-  right: 430px;
-}
-
-html[dir="rtl"] .help-button {
-  right: auto;
-  left: calc(14px + var(--safe-left));
+  pointer-events: auto;
 }
 
 .lesson-button {
@@ -740,11 +809,11 @@ html[dir="rtl"] .help-button {
   left: calc(14px + var(--safe-left));
   bottom: calc(72px + var(--safe-bottom));
   z-index: 24;
-  min-height: 44px;
-  padding: 10px 15px;
+  min-height: var(--target-primary);
+  padding: 11px 16px;
   display: inline-flex;
   align-items: center;
-  gap: 8px;
+  gap: var(--space-2);
   border: 1px solid rgba(255, 255, 255, 0.2);
   border-radius: 999px;
   color: #ffffff;
@@ -752,8 +821,7 @@ html[dir="rtl"] .help-button {
   box-shadow: 0 14px 34px rgba(0, 0, 0, 0.44);
   backdrop-filter: blur(12px);
   -webkit-backdrop-filter: blur(12px);
-  font: inherit;
-  font-size: 0.88rem;
+  font-size: 0.9rem;
   font-weight: 900;
   cursor: pointer;
 }
@@ -765,7 +833,6 @@ html[dir="rtl"] .lesson-button {
 
 .lesson-button:hover,
 .lesson-button:focus-visible {
-  outline: none;
   filter: brightness(1.08);
 }
 
@@ -780,7 +847,7 @@ html[dir="rtl"] .lesson-button {
   place-items: center;
   border-radius: 50%;
   background: rgba(255, 255, 255, 0.18);
-  font-size: 0.78rem;
+  font-size: 0.8125rem;
 }
 
 .system-switch-button:hover,
@@ -794,7 +861,6 @@ html[dir="rtl"] .lesson-button {
 .help-button:hover,
 .help-button:focus-visible {
   background: rgba(20, 26, 48, 0.85);
-  outline: none;
 }
 
 .system-switch-button:active,
@@ -832,9 +898,9 @@ html[dir="rtl"] .lesson-button {
 .leaderboard-card {
   width: min(760px, 100%);
   max-height: calc(var(--viewport-height) - 32px - var(--safe-top) - var(--safe-bottom));
-  padding: 18px;
+  padding: var(--space-5);
   display: grid;
-  gap: 14px;
+  gap: var(--space-4);
   border: 1px solid rgba(255, 255, 255, 0.16);
   border-radius: 14px;
   color: rgba(255, 255, 255, 0.94);
@@ -853,13 +919,13 @@ html[dir="rtl"] .lesson-button {
 
 .leaderboard-title {
   margin: 0;
-  font-size: 1.18rem;
+  font-size: 1.25rem;
   font-weight: 800;
 }
 
 .leaderboard-close {
-  width: 38px;
-  height: 38px;
+  width: var(--target-min);
+  height: var(--target-min);
   padding: 0;
   border: none;
   border-radius: 50%;
@@ -874,18 +940,17 @@ html[dir="rtl"] .lesson-button {
 .leaderboard-close:hover,
 .leaderboard-close:focus-visible {
   background: rgba(255, 255, 255, 0.18);
-  outline: none;
 }
 
 .leaderboard-stats {
   display: grid;
   grid-template-columns: repeat(4, minmax(0, 1fr));
-  gap: 8px;
+  gap: var(--space-3);
 }
 
 .leaderboard-stat {
   min-width: 0;
-  padding: 10px;
+  padding: var(--space-3);
   display: grid;
   gap: 3px;
   border: 1px solid rgba(255, 255, 255, 0.08);
@@ -902,7 +967,7 @@ html[dir="rtl"] .lesson-button {
 
 .leaderboard-stat span {
   color: rgba(255, 255, 255, 0.62);
-  font-size: 0.72rem;
+  font-size: 0.8125rem;
   font-weight: 700;
 }
 
@@ -927,7 +992,7 @@ html[dir="rtl"] .lesson-button {
   width: 100%;
   min-width: 650px;
   border-collapse: collapse;
-  font-size: 0.82rem;
+  font-size: 0.875rem;
 }
 
 .leaderboard-table th,
@@ -944,7 +1009,7 @@ html[dir="rtl"] .lesson-button {
   z-index: 1;
   color: rgba(255, 255, 255, 0.66);
   background: rgba(13, 16, 32, 0.98);
-  font-size: 0.72rem;
+  font-size: 0.8125rem;
   font-weight: 800;
 }
 
@@ -971,14 +1036,13 @@ html[dir="rtl"] .lesson-button {
 
 .leaderboard-clear,
 .leaderboard-export {
-  min-height: 38px;
-  padding: 8px 14px;
+  min-height: var(--target-min);
+  padding: 10px 16px;
   border: 1px solid rgba(255, 255, 255, 0.12);
   border-radius: 10px;
   color: rgba(255, 255, 255, 0.9);
   background: rgba(160, 38, 38, 0.7);
-  font: inherit;
-  font-size: 0.8rem;
+  font-size: 0.875rem;
   font-weight: 800;
   cursor: pointer;
 }
@@ -990,19 +1054,17 @@ html[dir="rtl"] .lesson-button {
 .leaderboard-clear:hover,
 .leaderboard-clear:focus-visible {
   background: rgba(185, 48, 48, 0.86);
-  outline: none;
 }
 
 .leaderboard-export:hover,
 .leaderboard-export:focus-visible {
   background: rgba(48, 112, 214, 0.88);
-  outline: none;
 }
 
 .leaderboard-clear:disabled,
 .leaderboard-export:disabled {
   cursor: default;
-  opacity: 0.5;
+  opacity: 0.62;
 }
 
 .mission-control-overlay {
@@ -1025,10 +1087,10 @@ html[dir="rtl"] .lesson-button {
 .mission-control-card {
   width: min(920px, 100%);
   max-height: calc(var(--viewport-height) - 32px - var(--safe-top) - var(--safe-bottom));
-  padding: 18px;
+  padding: var(--space-5);
   display: grid;
   grid-template-rows: auto auto minmax(0, 1fr);
-  gap: 14px;
+  gap: var(--space-4);
   border: 1px solid rgba(255, 255, 255, 0.16);
   border-radius: 14px;
   color: rgba(255, 255, 255, 0.94);
@@ -1047,13 +1109,13 @@ html[dir="rtl"] .lesson-button {
 
 .mission-control-title {
   margin: 0;
-  font-size: 1.18rem;
+  font-size: 1.25rem;
   font-weight: 800;
 }
 
 .mission-control-close {
-  width: 38px;
-  height: 38px;
+  width: var(--target-min);
+  height: var(--target-min);
   padding: 0;
   border: none;
   border-radius: 50%;
@@ -1068,26 +1130,24 @@ html[dir="rtl"] .lesson-button {
 .mission-control-close:hover,
 .mission-control-close:focus-visible {
   background: rgba(255, 255, 255, 0.18);
-  outline: none;
 }
 
 .mission-tabs {
   display: flex;
-  gap: 8px;
+  gap: var(--space-2);
   overflow-x: auto;
   padding-bottom: 2px;
 }
 
 .mission-tab-button {
   flex: 0 0 auto;
-  min-height: 36px;
-  padding: 8px 12px;
+  min-height: var(--target-min);
+  padding: 10px 16px;
   border: 1px solid rgba(255, 255, 255, 0.12);
   border-radius: 10px;
   color: rgba(255, 255, 255, 0.86);
   background: rgba(255, 255, 255, 0.06);
-  font: inherit;
-  font-size: 0.78rem;
+  font-size: 0.875rem;
   font-weight: 800;
   cursor: pointer;
 }
@@ -1101,16 +1161,39 @@ html[dir="rtl"] .lesson-button {
   min-height: 0;
   overflow: auto;
   display: grid;
-  gap: 14px;
-  padding-right: 2px;
+  gap: var(--space-4);
+  padding-inline-end: 2px;
+}
+
+.mission-subtabs {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-2);
+}
+
+.mission-subtab-button {
+  min-height: var(--target-min);
+  padding: 10px 14px;
+  border: 1px solid rgba(255, 255, 255, 0.12);
+  border-radius: var(--radius-md);
+  color: rgba(255, 255, 255, 0.84);
+  background: rgba(255, 255, 255, 0.06);
+  font-size: 0.875rem;
+  font-weight: 800;
+  cursor: pointer;
+}
+
+.mission-subtab-button.is-active {
+  color: #ffffff;
+  background: rgba(30, 90, 190, 0.78);
 }
 
 .lesson-hero {
   min-width: 0;
-  padding: 18px;
+  padding: var(--space-5);
   display: grid;
   grid-template-columns: minmax(0, 1fr) 190px;
-  gap: 16px;
+  gap: var(--space-4);
   align-items: end;
   border: 1px solid rgba(255, 255, 255, 0.12);
   border-radius: 14px;
@@ -1124,7 +1207,7 @@ html[dir="rtl"] .lesson-button {
   display: inline-flex;
   margin-bottom: 8px;
   color: rgba(142, 230, 184, 0.92);
-  font-size: 0.74rem;
+  font-size: 0.8125rem;
   font-weight: 900;
   text-transform: uppercase;
 }
@@ -1140,8 +1223,8 @@ html[dir="rtl"] .lesson-button {
   max-width: 620px;
   margin: 8px 0 0;
   color: rgba(255, 255, 255, 0.72);
-  font-size: 0.88rem;
-  line-height: 1.45;
+  font-size: 1rem;
+  line-height: 1.55;
 }
 
 .lesson-meter {
@@ -1158,7 +1241,7 @@ html[dir="rtl"] .lesson-button {
 
 .lesson-meter span {
   color: rgba(255, 255, 255, 0.66);
-  font-size: 0.72rem;
+  font-size: 0.8125rem;
   font-weight: 800;
 }
 
@@ -1190,15 +1273,15 @@ html[dir="rtl"] .lesson-button {
 .lesson-step-grid {
   display: grid;
   grid-template-columns: repeat(4, minmax(0, 1fr));
-  gap: 10px;
+  gap: var(--space-3);
 }
 
 .lesson-step-card {
   min-width: 0;
-  padding: 13px;
+  padding: var(--space-4);
   display: grid;
   grid-template-rows: auto auto 1fr auto;
-  gap: 8px;
+  gap: var(--space-2);
   border: 1px solid rgba(255, 255, 255, 0.09);
   border-radius: 12px;
   background: rgba(255, 255, 255, 0.045);
@@ -1221,33 +1304,32 @@ html[dir="rtl"] .lesson-button {
   border-radius: 999px;
   color: rgba(255, 255, 255, 0.88);
   background: rgba(255, 255, 255, 0.1);
-  font-size: 0.68rem;
+  font-size: 0.8125rem;
   font-weight: 900;
 }
 
 .lesson-step-card h3 {
   margin: 0;
   color: #ffffff;
-  font-size: 0.92rem;
+  font-size: 1rem;
   font-weight: 900;
 }
 
 .lesson-step-card p {
   margin: 0;
   color: rgba(255, 255, 255, 0.68);
-  font-size: 0.78rem;
-  line-height: 1.38;
+  font-size: 0.875rem;
+  line-height: 1.45;
 }
 
 .lesson-step-action,
 .lesson-secondary-action {
-  min-height: 38px;
+  min-height: var(--target-min);
   border: 1px solid rgba(255, 255, 255, 0.12);
   border-radius: 10px;
   color: #ffffff;
   background: rgba(30, 90, 190, 0.78);
-  font: inherit;
-  font-size: 0.78rem;
+  font-size: 0.875rem;
   font-weight: 900;
   cursor: pointer;
 }
@@ -1261,7 +1343,7 @@ html[dir="rtl"] .lesson-button {
 .mission-stat-grid {
   display: grid;
   grid-template-columns: repeat(6, minmax(0, 1fr));
-  gap: 8px;
+  gap: var(--space-3);
 }
 
 .mission-stat {
@@ -1283,20 +1365,20 @@ html[dir="rtl"] .lesson-button {
 
 .mission-stat span {
   color: rgba(255, 255, 255, 0.62);
-  font-size: 0.72rem;
+  font-size: 0.8125rem;
   font-weight: 700;
 }
 
 .mission-card-grid {
   display: grid;
   grid-template-columns: repeat(3, minmax(0, 1fr));
-  gap: 10px;
+  gap: var(--space-3);
 }
 
 .mission-card,
 .badge-card {
   min-width: 0;
-  padding: 13px;
+  padding: var(--space-4);
   border: 1px solid rgba(255, 255, 255, 0.09);
   border-radius: 12px;
   background: rgba(255, 255, 255, 0.045);
@@ -1326,8 +1408,8 @@ html[dir="rtl"] .lesson-button {
 .badge-card p {
   margin: 8px 0 0;
   color: rgba(255, 255, 255, 0.68);
-  font-size: 0.8rem;
-  line-height: 1.35;
+  font-size: 0.875rem;
+  line-height: 1.45;
 }
 
 .mission-bonus-pill {
@@ -1336,7 +1418,7 @@ html[dir="rtl"] .lesson-button {
   border-radius: 999px;
   color: rgba(255, 255, 255, 0.9);
   background: rgba(30, 90, 190, 0.6);
-  font-size: 0.68rem;
+  font-size: 0.8125rem;
   font-weight: 800;
 }
 
@@ -1351,9 +1433,9 @@ html[dir="rtl"] .lesson-button {
 .mission-steps li {
   display: flex;
   align-items: center;
-  gap: 7px;
+  gap: var(--space-2);
   color: rgba(255, 255, 255, 0.68);
-  font-size: 0.78rem;
+  font-size: 0.875rem;
 }
 
 .mission-steps li span:first-child {
@@ -1378,27 +1460,26 @@ html[dir="rtl"] .lesson-button {
 
 .mission-claim-button {
   width: 100%;
-  min-height: 38px;
-  margin-top: 12px;
+  min-height: var(--target-min);
+  margin-top: var(--space-3);
   border: 1px solid rgba(255, 255, 255, 0.12);
   border-radius: 10px;
   color: #ffffff;
   background: rgba(30, 90, 190, 0.82);
-  font: inherit;
-  font-size: 0.8rem;
+  font-size: 0.875rem;
   font-weight: 800;
   cursor: pointer;
 }
 
 .mission-claim-button:disabled {
   cursor: default;
-  opacity: 0.5;
+  opacity: 0.62;
 }
 
 .badge-grid {
   display: grid;
   grid-template-columns: repeat(3, minmax(0, 1fr));
-  gap: 10px;
+  gap: var(--space-3);
 }
 
 .badge-card {
@@ -1433,7 +1514,7 @@ html[dir="rtl"] .lesson-button {
 .compare-selects {
   display: grid;
   grid-template-columns: repeat(2, minmax(0, 1fr));
-  gap: 10px;
+  gap: var(--space-3);
 }
 
 .compare-select-wrap {
@@ -1443,18 +1524,18 @@ html[dir="rtl"] .lesson-button {
 
 .compare-select-wrap span {
   color: rgba(255, 255, 255, 0.66);
-  font-size: 0.74rem;
+  font-size: 0.8125rem;
   font-weight: 800;
 }
 
 .compare-select-wrap select {
-  min-height: 40px;
+  min-height: var(--target-min);
+  padding: 0 12px;
   border: 1px solid rgba(255, 255, 255, 0.14);
   border-radius: 10px;
   color: rgba(255, 255, 255, 0.94);
   background: rgba(0, 0, 0, 0.24);
-  font: inherit;
-  font-size: 0.82rem;
+  font-size: 0.875rem;
 }
 
 .compare-table {
@@ -1462,7 +1543,7 @@ html[dir="rtl"] .lesson-button {
   border-collapse: collapse;
   overflow: hidden;
   border-radius: 10px;
-  font-size: 0.82rem;
+  font-size: 0.875rem;
 }
 
 .compare-table th,
@@ -1482,7 +1563,7 @@ html[dir="rtl"] .lesson-button {
 .simulator-layout {
   display: grid;
   grid-template-columns: 210px minmax(0, 1fr);
-  gap: 12px;
+  gap: var(--space-4);
 }
 
 .simulator-side {
@@ -1492,14 +1573,13 @@ html[dir="rtl"] .lesson-button {
 }
 
 .simulator-mission-button {
-  min-height: 42px;
-  padding: 9px 11px;
+  min-height: var(--target-min);
+  padding: 10px 12px;
   border: 1px solid rgba(255, 255, 255, 0.12);
   border-radius: 10px;
   color: rgba(255, 255, 255, 0.84);
   background: rgba(255, 255, 255, 0.06);
-  font: inherit;
-  font-size: 0.78rem;
+  font-size: 0.875rem;
   font-weight: 800;
   text-align: start;
   cursor: pointer;
@@ -1543,27 +1623,27 @@ html[dir="rtl"] .lesson-button {
 
 .simulator-details dt {
   color: rgba(255, 255, 255, 0.56);
-  font-size: 0.7rem;
+  font-size: 0.8125rem;
   font-weight: 800;
 }
 
 .simulator-details dd {
   color: rgba(255, 255, 255, 0.94);
-  font-size: 0.78rem;
+  font-size: 0.875rem;
   font-weight: 800;
 }
 
 .simulator-summary {
   margin: 0;
   color: rgba(255, 255, 255, 0.74);
-  font-size: 0.82rem;
-  line-height: 1.4;
+  font-size: 0.875rem;
+  line-height: 1.45;
 }
 
 .mission-section-title {
   margin: 0;
   color: #ffffff;
-  font-size: 0.95rem;
+  font-size: 1rem;
   font-weight: 800;
 }
 
@@ -1573,8 +1653,8 @@ html[dir="rtl"] .lesson-button {
   display: grid;
   gap: 7px;
   color: rgba(255, 255, 255, 0.78);
-  font-size: 0.84rem;
-  line-height: 1.4;
+  font-size: 0.875rem;
+  line-height: 1.45;
 }
 
 .source-list {
@@ -1583,12 +1663,15 @@ html[dir="rtl"] .lesson-button {
 }
 
 .source-list a {
+  min-height: var(--target-min);
   padding: 10px 12px;
+  display: flex;
+  align-items: center;
   border: 1px solid rgba(255, 255, 255, 0.1);
   border-radius: 10px;
   color: #b9d6ff;
   background: rgba(255, 255, 255, 0.045);
-  font-size: 0.82rem;
+  font-size: 0.875rem;
   font-weight: 800;
   text-decoration: none;
 }
@@ -1596,17 +1679,16 @@ html[dir="rtl"] .lesson-button {
 .source-list a:hover,
 .source-list a:focus-visible {
   background: rgba(30, 90, 190, 0.24);
-  outline: none;
 }
 
 .project-brief {
   display: grid;
-  gap: 12px;
+  gap: var(--space-3);
 }
 
 .project-brief-hero,
 .project-brief-section {
-  padding: 13px;
+  padding: var(--space-4);
   border: 1px solid rgba(255, 255, 255, 0.09);
   border-radius: 12px;
   background: rgba(255, 255, 255, 0.045);
@@ -1620,7 +1702,7 @@ html[dir="rtl"] .lesson-button {
 .project-brief-section h3 {
   margin: 0;
   color: #ffffff;
-  font-size: 0.95rem;
+  font-size: 1rem;
   font-weight: 800;
 }
 
@@ -1628,8 +1710,8 @@ html[dir="rtl"] .lesson-button {
 .project-brief-section p {
   margin: 7px 0 0;
   color: rgba(255, 255, 255, 0.74);
-  font-size: 0.83rem;
-  line-height: 1.45;
+  font-size: 0.875rem;
+  line-height: 1.5;
 }
 
 .project-brief-list {
@@ -1638,20 +1720,20 @@ html[dir="rtl"] .lesson-button {
   display: grid;
   gap: 7px;
   color: rgba(255, 255, 255, 0.78);
-  font-size: 0.82rem;
-  line-height: 1.45;
+  font-size: 0.875rem;
+  line-height: 1.5;
 }
 
 .project-storyboard-grid {
-  margin-top: 9px;
+  margin-top: var(--space-3);
   display: grid;
   grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
-  gap: 8px;
+  gap: var(--space-3);
 }
 
 .project-storyboard-step {
   min-width: 0;
-  padding: 10px;
+  padding: var(--space-3);
   border: 1px solid rgba(255, 255, 255, 0.08);
   border-radius: 10px;
   background: rgba(0, 0, 0, 0.18);
@@ -1659,24 +1741,24 @@ html[dir="rtl"] .lesson-button {
 
 .project-storyboard-step strong {
   color: #ffffff;
-  font-size: 0.8rem;
+  font-size: 0.875rem;
 }
 
 .project-storyboard-step p {
   margin-top: 6px;
-  font-size: 0.78rem;
+  font-size: 0.875rem;
 }
 
 .control-panel {
   position: fixed;
   top: 62px;
-  right: 14px;
+  inset-inline-end: 14px;
   z-index: 21;
-  width: 300px;
+  width: 336px;
   max-width: calc(100vw - 28px);
-  padding: 12px;
+  padding: var(--space-4);
   display: grid;
-  gap: 10px;
+  gap: var(--space-3);
   border: 1px solid rgba(255, 255, 255, 0.14);
   border-radius: 12px;
   color: rgba(255, 255, 255, 0.94);
@@ -1693,9 +1775,9 @@ html[dir="rtl"] .lesson-button {
 
 .control-row {
   display: grid;
-  grid-template-columns: 54px minmax(0, 1fr) 46px;
+  grid-template-columns: 64px minmax(0, 1fr) 52px;
   align-items: center;
-  gap: 8px;
+  gap: var(--space-2);
 }
 
 .control-single-button-row,
@@ -1705,26 +1787,25 @@ html[dir="rtl"] .lesson-button {
 
 .control-label {
   color: rgba(255, 255, 255, 0.68);
-  font-size: 0.78rem;
+  font-size: 0.875rem;
   font-weight: 700;
 }
 
 .control-value {
   color: rgba(255, 255, 255, 0.82);
-  font-size: 0.74rem;
+  font-size: 0.8125rem;
   font-variant-numeric: tabular-nums;
-  text-align: right;
+  text-align: end;
 }
 
 .control-button {
-  min-height: 38px;
-  padding: 8px 10px;
+  min-height: var(--target-min);
+  padding: 10px 12px;
   border: 1px solid rgba(255, 255, 255, 0.14);
   border-radius: 10px;
   color: rgba(255, 255, 255, 0.92);
   background: rgba(255, 255, 255, 0.08);
-  font: inherit;
-  font-size: 0.78rem;
+  font-size: 0.875rem;
   font-weight: 700;
   cursor: pointer;
 }
@@ -1754,16 +1835,16 @@ html[dir="rtl"] .lesson-button {
 
 .control-section-title {
   color: rgba(255, 255, 255, 0.82);
-  font-size: 0.78rem;
+  font-size: 0.875rem;
   font-weight: 800;
 }
 
 .control-view-row {
-  grid-template-columns: 42px minmax(0, 1fr) 42px;
+  grid-template-columns: 48px minmax(0, 1fr) 48px;
 }
 
 .control-view-reset-row .control-button {
-  min-height: 34px;
+  min-height: var(--target-min);
 }
 
 .support-message {
@@ -1783,6 +1864,75 @@ html[dir="rtl"] .lesson-button {
   line-height: 1.45;
 }
 
+.asset-progress {
+  position: fixed;
+  left: 50%;
+  top: calc(74px + var(--safe-top));
+  z-index: 24;
+  width: min(360px, calc(100vw - 32px));
+  padding: var(--space-3);
+  display: grid;
+  gap: var(--space-2);
+  border: 1px solid rgba(255, 255, 255, 0.14);
+  border-radius: var(--radius-lg);
+  color: rgba(255, 255, 255, 0.92);
+  background: rgba(7, 8, 18, 0.76);
+  box-shadow: 0 14px 34px rgba(0, 0, 0, 0.42);
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+  transform: translateX(-50%);
+}
+
+.asset-progress[hidden] {
+  display: none;
+}
+
+.asset-progress-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--space-3);
+  font-size: 0.875rem;
+  font-weight: 800;
+}
+
+.asset-progress-value {
+  font-variant-numeric: tabular-nums;
+}
+
+.asset-progress-track {
+  height: 8px;
+  overflow: hidden;
+  border-radius: 999px;
+  background: rgba(255, 255, 255, 0.12);
+}
+
+.asset-progress-bar {
+  width: 0%;
+  height: 100%;
+  display: block;
+  border-radius: inherit;
+  background: linear-gradient(90deg, #64b5ff, #8ee6b8);
+  transition: width 180ms ease;
+}
+
+:where(button, [href], input, select, textarea):focus-visible {
+  outline: 2px solid var(--focus-color) !important;
+  outline-offset: 3px !important;
+  box-shadow: var(--focus-shadow);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    scroll-behavior: auto !important;
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+  }
+}
+
 .a-enter-vr,
 .a-enter-ar,
 .a-orientation-modal,
@@ -1800,8 +1950,8 @@ html[dir="rtl"] .lesson-button {
     bottom: calc(70px + var(--safe-bottom));
     width: auto;
     max-height: min(52vh, 390px);
-    padding: 10px;
-    gap: 8px;
+    padding: var(--space-3);
+    gap: var(--space-2);
     overflow-y: auto;
   }
 
@@ -1823,7 +1973,7 @@ html[dir="rtl"] .lesson-button {
 
   .planet-info-name {
     font-size: 1.05rem;
-    padding-right: 40px;
+    padding-inline-end: 48px;
   }
 
   .planet-info-figure {
@@ -1835,18 +1985,14 @@ html[dir="rtl"] .lesson-button {
   }
 
   .planet-info-stats {
-    font-size: 0.82rem;
+    font-size: 0.875rem;
     column-gap: 10px;
     padding: 8px 10px;
     max-height: 38vh;
   }
 
   .planet-info-text {
-    font-size: 0.88rem;
-  }
-
-  .planet-quiz-choice {
-    font-size: 0.72rem;
+    font-size: 0.95rem;
   }
 
   .leaderboard-card {
@@ -1861,66 +2007,80 @@ html[dir="rtl"] .lesson-button {
 
   .leaderboard-table-wrap {
     max-height: 42vh;
+    border: none;
+    border-radius: 0;
+    overflow: auto;
   }
 
-  .system-switch-button {
+  .leaderboard-table {
+    min-width: 0;
+    display: block;
+  }
+
+  .leaderboard-table thead {
+    display: none;
+  }
+
+  .leaderboard-table tbody {
+    display: grid;
+    gap: var(--space-3);
+  }
+
+  .leaderboard-table tr {
+    padding: var(--space-3);
+    display: grid;
+    gap: var(--space-2);
+    border: 1px solid rgba(255, 255, 255, 0.08);
+    border-radius: var(--radius-md);
+    background: rgba(255, 255, 255, 0.045);
+  }
+
+  .leaderboard-table td {
+    padding: 0;
+    display: flex;
+    justify-content: space-between;
+    gap: var(--space-3);
+    border-bottom: none;
+    text-align: end;
+  }
+
+  .leaderboard-table td::before {
+    content: attr(data-label);
+    color: rgba(255, 255, 255, 0.58);
+    font-weight: 800;
+    text-align: start;
+  }
+
+  .app-toolbar {
     top: calc(10px + var(--safe-top));
     left: calc(10px + var(--safe-left));
-    right: auto;
+    right: calc(10px + var(--safe-right));
+    gap: var(--space-2);
   }
 
+  .app-toolbar-main {
+    max-width: calc(100vw - 74px - var(--safe-left) - var(--safe-right));
+    gap: var(--space-2);
+  }
+
+  .asset-progress {
+    top: calc(164px + var(--safe-top));
+    width: min(340px, calc(100vw - 20px - var(--safe-left) - var(--safe-right)));
+  }
+
+  .system-switch-button,
   .language-switch-button {
-    top: calc(10px + var(--safe-top));
-    left: auto;
-    right: calc(10px + var(--safe-right));
+    min-height: var(--target-min);
+    padding: 9px 12px;
+    font-size: 0.875rem;
   }
 
   .leaderboard-button,
   .mission-control-button,
   .help-button {
-    top: calc(58px + var(--safe-top));
-    width: 39px;
-    height: 39px;
+    width: var(--target-min);
+    height: var(--target-min);
     padding: 0;
-    justify-content: center;
-  }
-
-  .leaderboard-button {
-    left: calc(10px + var(--safe-left));
-  }
-
-  .mission-control-button {
-    left: calc(58px + var(--safe-left));
-  }
-
-  .help-button {
-    left: auto;
-    right: calc(10px + var(--safe-right));
-  }
-
-  html[dir="rtl"] .system-switch-button {
-    left: auto;
-    right: calc(10px + var(--safe-right));
-  }
-
-  html[dir="rtl"] .language-switch-button {
-    left: calc(10px + var(--safe-left));
-    right: auto;
-  }
-
-  html[dir="rtl"] .leaderboard-button {
-    left: auto;
-    right: calc(10px + var(--safe-right));
-  }
-
-  html[dir="rtl"] .mission-control-button {
-    left: auto;
-    right: calc(58px + var(--safe-right));
-  }
-
-  html[dir="rtl"] .help-button {
-    left: calc(10px + var(--safe-left));
-    right: auto;
   }
 
   .leaderboard-button-text,
@@ -1929,12 +2089,12 @@ html[dir="rtl"] .lesson-button {
   }
 
   .lesson-button {
-    top: calc(106px + var(--safe-top));
+    top: calc(112px + var(--safe-top));
     left: calc(10px + var(--safe-left));
     bottom: auto;
-    min-height: 40px;
-    padding: 8px 11px;
-    font-size: 0.78rem;
+    min-height: var(--target-min);
+    padding: 9px 12px;
+    font-size: 0.875rem;
   }
 
   html[dir="rtl"] .lesson-button {
@@ -1972,10 +2132,50 @@ html[dir="rtl"] .lesson-button {
 
   .planet-info-close {
     top: 6px;
-    right: 6px;
-    width: 38px;
-    height: 38px;
+    inset-inline-end: 6px;
+    width: var(--target-min);
+    height: var(--target-min);
     font-size: 1.5rem;
+  }
+
+  .compare-table {
+    display: block;
+    border-radius: 0;
+    border: none;
+  }
+
+  .compare-table thead {
+    display: none;
+  }
+
+  .compare-table tbody {
+    display: grid;
+    gap: var(--space-3);
+  }
+
+  .compare-table tr {
+    padding: var(--space-3);
+    display: grid;
+    gap: var(--space-2);
+    border: 1px solid rgba(255, 255, 255, 0.08);
+    border-radius: var(--radius-md);
+    background: rgba(255, 255, 255, 0.045);
+  }
+
+  .compare-table td {
+    padding: 0;
+    display: flex;
+    justify-content: space-between;
+    gap: var(--space-3);
+    border: none;
+    text-align: end;
+  }
+
+  .compare-table td::before {
+    content: attr(data-label);
+    color: rgba(255, 255, 255, 0.58);
+    font-weight: 800;
+    text-align: start;
   }
 }
 
@@ -1989,18 +2189,18 @@ html[dir="rtl"] .lesson-button {
   }
 
   .system-switch-button {
-    padding: 8px 12px;
-    font-size: 0.78rem;
+    padding: 9px 11px;
+    font-size: 0.8125rem;
   }
 
   .language-switch-button {
-    padding: 8px 12px;
-    font-size: 0.78rem;
+    padding: 9px 11px;
+    font-size: 0.8125rem;
   }
 
   .leaderboard-button,
   .mission-control-button {
-    font-size: 0.78rem;
+    font-size: 0.8125rem;
   }
 
   .lesson-button-text {
@@ -2008,8 +2208,8 @@ html[dir="rtl"] .lesson-button {
   }
 
   .lesson-button {
-    width: 42px;
-    height: 42px;
+    width: var(--target-min);
+    height: var(--target-min);
     padding: 0;
     justify-content: center;
   }
@@ -2025,7 +2225,7 @@ html[dir="rtl"] .lesson-button {
 
   .planet-info-stats dt {
     color: rgba(255, 255, 255, 0.55);
-    font-size: 0.75rem;
+    font-size: 0.8125rem;
     margin-top: 4px;
   }
 
@@ -2034,7 +2234,7 @@ html[dir="rtl"] .lesson-button {
   }
 
   .planet-info-stats dd {
-    text-align: left;
+    text-align: start;
   }
 
   .planet-quiz-choices {

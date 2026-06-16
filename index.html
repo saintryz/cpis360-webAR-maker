@@ -22,6 +22,12 @@
       <div class="loading-spinner" aria-hidden="true"></div>
       <p class="loading-text">جارٍ تشغيل كاميرا الواقع المعزز...</p>
       <p class="loading-hint">إذا طلب المتصفح الإذن، اسمح باستخدام الكاميرا.</p>
+      <div class="loading-progress" aria-hidden="true">
+        <div class="loading-progress-track">
+          <span id="loadingProgressBar" class="loading-progress-bar"></span>
+        </div>
+        <p id="loadingProgressText" class="loading-progress-text">تحميل الواجهة والنماذج...</p>
+      </div>
     </div>
 
     <div id="onboardingOverlay" class="onboarding" role="dialog" aria-modal="true" aria-labelledby="onboardingTitle" hidden>
@@ -52,26 +58,30 @@
     <div id="hudLabel" class="hud-label" role="status" aria-live="polite">
       ☀️ علامة Hiro · اسحب للتحريك · اقرص للتكبير · اضغط على الكواكب أو السفن للمعلومات
     </div>
-    <button id="systemSwitchButton" class="system-switch-button" type="button" aria-label="تبديل النظام الكوكبي">
-      <span class="system-switch-icon" aria-hidden="true">⇄</span> تاو سيتي
-    </button>
-    <button id="languageSwitchButton" class="language-switch-button" type="button" aria-label="Switch to English">
-      English
-    </button>
-    <button id="leaderboardButton" class="leaderboard-button" type="button" aria-label="فتح لوحة الصدارة" aria-expanded="false">
-      <span class="leaderboard-button-icon" aria-hidden="true">★</span>
-      <span class="leaderboard-button-text">لوحة الصدارة</span>
-    </button>
-    <button id="missionControlButton" class="mission-control-button" type="button" aria-label="فتح مركز المهمات" aria-expanded="false">
-      <span class="mission-control-button-icon" aria-hidden="true">◆</span>
-      <span class="mission-control-button-text">مركز المهمات</span>
-    </button>
+    <nav class="app-toolbar" aria-label="أدوات التطبيق">
+      <div class="app-toolbar-main">
+        <button id="systemSwitchButton" class="system-switch-button" type="button" aria-label="تبديل النظام الكوكبي">
+          <span class="system-switch-icon" aria-hidden="true">⇄</span> تاو سيتي
+        </button>
+        <button id="languageSwitchButton" class="language-switch-button" type="button" aria-label="Switch to English">
+          English
+        </button>
+        <button id="leaderboardButton" class="leaderboard-button" type="button" aria-label="فتح لوحة الصدارة" aria-expanded="false">
+          <span class="leaderboard-button-icon" aria-hidden="true">★</span>
+          <span class="leaderboard-button-text">لوحة الصدارة</span>
+        </button>
+        <button id="missionControlButton" class="mission-control-button" type="button" aria-label="فتح مركز المهمات" aria-expanded="false">
+          <span class="mission-control-button-icon" aria-hidden="true">◆</span>
+          <span class="mission-control-button-text">مركز المهمات</span>
+        </button>
+      </div>
+      <button id="helpButton" class="help-button" type="button" aria-label="عرض التعليمات">
+        ?
+      </button>
+    </nav>
     <button id="lessonButton" class="lesson-button" type="button" aria-label="بدء الرحلة التعليمية">
       <span class="lesson-button-icon" aria-hidden="true">▶</span>
       <span class="lesson-button-text">ابدأ الرحلة</span>
-    </button>
-    <button id="helpButton" class="help-button" type="button" aria-label="عرض التعليمات">
-      ?
     </button>
 
     <a-scene
