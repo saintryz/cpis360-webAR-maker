@@ -1,0 +1,10 @@
+{
+  "name": "ar-planetary-system-visualizer",
+  "version": "1.0.0",
+  "private": true,
+  "description": "A CPIS 360 Web AR prototype for exploring planetary systems with marker-based AR.",
+  "scripts": {
+    "start": "node serve.js 8123",
+    "check": "node --check main.js && node --check serve.js"
+  }
+}

@@ -1,53 +1,65 @@
 <!doctype html>
-<html lang="en">
+<html lang="ar" dir="rtl">
   <head>
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1">
-    <title>AR Planetary System Visualizer</title>
+    <title>عارض النظام الكوكبي بالواقع المعزز</title>
     <link rel="stylesheet" href="style.css">
     <script src="https://aframe.io/releases/1.4.0/aframe.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/three@0.147.0/examples/js/loaders/GLTFLoader.js"></script>
     <script src="https://raw.githack.com/AR-js-org/AR.js/3.4.5/aframe/build/aframe-ar.js"></script>
     <script src="main.js"></script>
   </head>
   <body>
     <div id="loadingScreen" class="loading-screen" role="status" aria-live="polite">
       <div class="loading-spinner" aria-hidden="true"></div>
-      <p class="loading-text">Starting AR camera…</p>
-      <p class="loading-hint">If your browser asks, allow camera access.</p>
+      <p class="loading-text">جارٍ تشغيل كاميرا الواقع المعزز...</p>
+      <p class="loading-hint">إذا طلب المتصفح الإذن، اسمح باستخدام الكاميرا.</p>
     </div>
 
     <div id="onboardingOverlay" class="onboarding" role="dialog" aria-modal="true" aria-labelledby="onboardingTitle" hidden>
       <div class="onboarding-card">
-        <h2 id="onboardingTitle" class="onboarding-title">Welcome, space explorer! 🚀</h2>
+        <h2 id="onboardingTitle" class="onboarding-title">أهلًا يا مستكشف الفضاء!</h2>
         <p class="onboarding-intro">
-          Point your camera at the printed Hiro marker to see a planetary system appear in 3D.
+          وجّه الكاميرا إلى علامة Hiro المطبوعة حتى يظهر النظام الكوكبي ثلاثي الأبعاد.
         </p>
         <ol class="onboarding-steps">
-          <li><strong>Print the marker.</strong> Tap the button below to download. Plain paper, any size — bigger is easier.</li>
-          <li><strong>Place it flat</strong> on a desk in good light, with white space around the black border.</li>
-          <li><strong>Point your camera</strong> at the marker. The 3D model appears on top!</li>
+          <li><strong>اطبع العلامة.</strong> اضغط زر التحميل. ورق عادي يكفي، وكلما كبر الحجم كان أسهل.</li>
+          <li><strong>ضعها بشكل مسطح</strong> على طاولة بإضاءة جيدة، واترك مساحة بيضاء حول الإطار الأسود.</li>
+          <li><strong>وجّه الكاميرا</strong> نحو العلامة. سيظهر المجسم ثلاثي الأبعاد فوقها!</li>
         </ol>
         <div class="onboarding-markers">
           <a class="onboarding-marker"
              href="https://raw.githubusercontent.com/AR-js-org/AR.js/master/data/images/HIRO.jpg"
              download="hiro-marker.jpg" target="_blank" rel="noopener">
-            <span class="onboarding-marker-tag">Solar &amp; Tau Ceti</span>
-            <span class="onboarding-marker-name">Hiro marker</span>
-            <span class="onboarding-marker-download">Download ↓</span>
+            <span class="onboarding-marker-tag">النظام الشمسي وتاو سيتي</span>
+            <span class="onboarding-marker-name">علامة Hiro</span>
+            <span class="onboarding-marker-download">تحميل</span>
           </a>
         </div>
-        <p class="onboarding-tip">Tip: Tap a planet for fun facts. Drag to move it around (up, down, sideways). Pinch to zoom. Use the button to switch systems.</p>
-        <button id="onboardingClose" class="onboarding-button" type="button">Got it — let's go!</button>
+        <p class="onboarding-tip">نصيحة: اضغط على كوكب أو سفينة لعرض معلومات ممتعة. اسحب للتحريك، واقرص للتكبير، واستخدم الزر لتبديل النظام.</p>
+        <button id="onboardingClose" class="onboarding-button" type="button">فهمت، لنبدأ!</button>
       </div>
     </div>
 
     <div id="hudLabel" class="hud-label" role="status" aria-live="polite">
-      ☀️ Hiro marker · drag to move · pinch to zoom · tap a planet for info
+      ☀️ علامة Hiro · اسحب للتحريك · اقرص للتكبير · اضغط على الكواكب أو السفن للمعلومات
     </div>
-    <button id="systemSwitchButton" class="system-switch-button" type="button" aria-label="Switch planetary system">
-      <span class="system-switch-icon" aria-hidden="true">⇄</span> Tau Ceti
+    <button id="systemSwitchButton" class="system-switch-button" type="button" aria-label="تبديل النظام الكوكبي">
+      <span class="system-switch-icon" aria-hidden="true">⇄</span> تاو سيتي
     </button>
-    <button id="helpButton" class="help-button" type="button" aria-label="Show how-to instructions">
+    <button id="languageSwitchButton" class="language-switch-button" type="button" aria-label="Switch to English">
+      English
+    </button>
+    <button id="leaderboardButton" class="leaderboard-button" type="button" aria-label="فتح لوحة الصدارة" aria-expanded="false">
+      <span class="leaderboard-button-icon" aria-hidden="true">★</span>
+      <span class="leaderboard-button-text">لوحة الصدارة</span>
+    </button>
+    <button id="missionControlButton" class="mission-control-button" type="button" aria-label="فتح مركز المهمات" aria-expanded="false">
+      <span class="mission-control-button-icon" aria-hidden="true">◆</span>
+      <span class="mission-control-button-text">مركز المهمات</span>
+    </button>
+    <button id="helpButton" class="help-button" type="button" aria-label="عرض التعليمات">
       ?
     </button>
 
@@ -74,7 +86,8 @@
         smooth="true"
         smoothCount="10"
         smoothTolerance="0.01"
-        smoothThreshold="5">
+        smoothThreshold="5"
+        persistent-marker>
         <a-entity id="solarScene" solar-system-scene></a-entity>
         <a-entity id="tauCetiScene" solar-system-scene="system: tauCeti" visible="false"></a-entity>
       </a-marker>
