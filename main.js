@@ -109,6 +109,9 @@
       missionControlAria: "Open mission control dashboard",
       missionControlTitle: "Mission Control",
       missionCloseAria: "Close mission control",
+      lessonButton: "Start Journey",
+      lessonButtonAria: "Start guided learning journey",
+      tabLesson: "Journey",
       tabOverview: "Overview",
       tabProject: "Project",
       tabMissions: "Missions",
@@ -122,6 +125,25 @@
       progressBadges: "Badges",
       progressMissions: "Missions",
       progressSaved: "Saved scores",
+      lessonTitle: "Guided Space Journey",
+      lessonSubtitle: "A focused path for a classroom demo: set up AR, explore, compare, simulate, then prove learning.",
+      lessonProgressLabel: "Journey readiness",
+      lessonStepExploreTitle: "1. Anchor the system",
+      lessonStepExploreText: "Use the Hiro marker, tap Earth or Mars, and build the first spatial connection.",
+      lessonStepMissionTitle: "2. Complete a mission",
+      lessonStepMissionText: "Follow the Solar Scout or Tau Ceti Researcher checklist to turn exploration into a task.",
+      lessonStepCompareTitle: "3. Compare worlds",
+      lessonStepCompareText: "Use side-by-side metrics to explain scale, distance, days, years, and moons.",
+      lessonStepSimTitle: "4. Connect to real missions",
+      lessonStepSimText: "Open mission simulations and source links to ground the AR scene in current space exploration.",
+      lessonActionExplore: "Explore AR",
+      lessonActionMissions: "Open missions",
+      lessonActionCompare: "Compare bodies",
+      lessonActionSim: "Run simulator",
+      lessonActionLearn: "View sources",
+      lessonStatusReady: "Ready",
+      lessonStatusNext: "Next",
+      lessonStatusDone: "Done",
       missionClaim: "Claim",
       missionClaimed: "Completed",
       missionBonus: (points) => `${points} mission bonus points`,
@@ -304,6 +326,9 @@
       missionControlAria: "فتح لوحة مركز المهمات",
       missionControlTitle: "مركز المهمات",
       missionCloseAria: "إغلاق مركز المهمات",
+      lessonButton: "ابدأ الرحلة",
+      lessonButtonAria: "بدء الرحلة التعليمية الموجهة",
+      tabLesson: "الرحلة",
       tabOverview: "نظرة عامة",
       tabProject: "المشروع",
       tabMissions: "المهمات",
@@ -317,6 +342,25 @@
       progressBadges: "الشارات",
       progressMissions: "المهمات",
       progressSaved: "النتائج المحفوظة",
+      lessonTitle: "رحلة فضائية موجهة",
+      lessonSubtitle: "مسار واضح لعرض الصف: ابدأ بالواقع المعزز، استكشف، قارن، شغّل المحاكاة، ثم أثبت التعلم.",
+      lessonProgressLabel: "جاهزية الرحلة",
+      lessonStepExploreTitle: "1. ثبّت النظام",
+      lessonStepExploreText: "استخدم علامة Hiro، واضغط على الأرض أو المريخ، وابنِ أول علاقة مكانية.",
+      lessonStepMissionTitle: "2. أكمل مهمة",
+      lessonStepMissionText: "اتبع قائمة كشاف النظام الشمسي أو باحث تاو سيتي لتحويل الاستكشاف إلى مهمة.",
+      lessonStepCompareTitle: "3. قارن العوالم",
+      lessonStepCompareText: "استخدم المقاييس جنبًا إلى جنب لشرح الحجم والمسافة واليوم والسنة والأقمار.",
+      lessonStepSimTitle: "4. اربطها بمهمات حقيقية",
+      lessonStepSimText: "افتح محاكاة المهمات وروابط المصادر لربط مشهد الواقع المعزز باستكشاف الفضاء الحالي.",
+      lessonActionExplore: "استكشف AR",
+      lessonActionMissions: "افتح المهمات",
+      lessonActionCompare: "قارن الأجسام",
+      lessonActionSim: "شغّل المحاكي",
+      lessonActionLearn: "اعرض المصادر",
+      lessonStatusReady: "جاهز",
+      lessonStatusNext: "التالي",
+      lessonStatusDone: "تم",
       missionClaim: "استلام",
       missionClaimed: "مكتملة",
       missionBonus: (points) => `${points} نقطة مكافأة مهمة`,
@@ -1308,6 +1352,7 @@
   const PROGRESS_STORAGE_KEY = "arPlanetaryProgress.v1";
   const MISSION_BONUS_POINTS = 50;
   const MISSION_CONTROL_TABS = [
+    { id: "lesson", labelKey: "tabLesson" },
     { id: "overview", labelKey: "tabOverview" },
     { id: "project", labelKey: "tabProject" },
     { id: "missions", labelKey: "tabMissions" },
@@ -1439,7 +1484,7 @@
     url: mission.sourceUrl
   }));
   let missionControlUi = null;
-  let missionControlActiveTab = "overview";
+  let missionControlActiveTab = "lesson";
   let missionCompareSelection = { first: "solar:Earth", second: "solar:Mars" };
   let activeSimulationId = "artemis-ii";
   let missionSimulator = null;
@@ -5849,6 +5894,151 @@
     button.setAttribute("aria-label", t("missionControlAria"));
   };
 
+  const applyLessonButtonLanguage = () => {
+    const button = document.getElementById("lessonButton");
+    if (!button) return;
+    const text = button.querySelector(".lesson-button-text");
+    if (text) text.textContent = t("lessonButton");
+    button.setAttribute("aria-label", t("lessonButtonAria"));
+  };
+
+  const switchMissionControlTab = (tabId) => {
+    missionControlActiveTab = tabId;
+    renderMissionControlDashboard();
+  };
+
+  const createLessonStep = (config) => {
+    const card = document.createElement("article");
+    card.className = "lesson-step-card";
+    card.classList.toggle("is-done", config.done);
+    card.classList.toggle("is-next", config.next);
+
+    const status = document.createElement("span");
+    status.className = "lesson-step-status";
+    status.textContent = config.done ? t("lessonStatusDone") : (config.next ? t("lessonStatusNext") : t("lessonStatusReady"));
+
+    const title = document.createElement("h3");
+    title.textContent = t(config.titleKey);
+    const text = document.createElement("p");
+    text.textContent = t(config.textKey);
+
+    const action = document.createElement("button");
+    action.type = "button";
+    action.className = "lesson-step-action";
+    action.textContent = t(config.actionKey);
+    action.addEventListener("click", config.onAction);
+
+    card.appendChild(status);
+    card.appendChild(title);
+    card.appendChild(text);
+    card.appendChild(action);
+    return card;
+  };
+
+  const renderGuidedJourney = (content, progress) => {
+    const stats = getProgressStats(progress);
+    const discoveredCount = progress.discovered.length;
+    const hasQuiz = progress.quizzesCompleted > 0;
+    const hasMission = progress.completedMissions.length > 0;
+    const hasSavedScore = readLeaderboardEntries().length > 0;
+    const completed = [discoveredCount > 0, hasQuiz || hasMission, discoveredCount >= 2, hasSavedScore || progress.badges.length > 0]
+      .filter(Boolean).length;
+    const percent = Math.round((completed / 4) * 100);
+    const firstOpenStep = completed;
+
+    const hero = document.createElement("section");
+    hero.className = "lesson-hero";
+    const copy = document.createElement("div");
+    const eyebrow = document.createElement("span");
+    eyebrow.className = "lesson-eyebrow";
+    eyebrow.textContent = t("tabLesson");
+    const title = document.createElement("h3");
+    title.textContent = t("lessonTitle");
+    const subtitle = document.createElement("p");
+    subtitle.textContent = t("lessonSubtitle");
+    copy.appendChild(eyebrow);
+    copy.appendChild(title);
+    copy.appendChild(subtitle);
+
+    const meter = document.createElement("div");
+    meter.className = "lesson-meter";
+    const meterLabel = document.createElement("span");
+    meterLabel.textContent = t("lessonProgressLabel");
+    const meterValue = document.createElement("strong");
+    meterValue.textContent = `${percent}%`;
+    const meterTrack = document.createElement("div");
+    meterTrack.className = "lesson-meter-track";
+    const meterFill = document.createElement("span");
+    meterFill.style.width = `${percent}%`;
+    meterTrack.appendChild(meterFill);
+    meter.appendChild(meterLabel);
+    meter.appendChild(meterValue);
+    meter.appendChild(meterTrack);
+
+    hero.appendChild(copy);
+    hero.appendChild(meter);
+    content.appendChild(hero);
+
+    const statsGrid = document.createElement("div");
+    statsGrid.className = "mission-stat-grid lesson-stat-grid";
+    statsGrid.appendChild(createMissionControlStat(t("progressDiscovered"), stats.discovered));
+    statsGrid.appendChild(createMissionControlStat(t("progressQuizzes"), stats.quizzes));
+    statsGrid.appendChild(createMissionControlStat(t("progressAccuracy"), stats.accuracy));
+    statsGrid.appendChild(createMissionControlStat(t("progressSaved"), stats.saved));
+    content.appendChild(statsGrid);
+
+    const steps = document.createElement("div");
+    steps.className = "lesson-step-grid";
+    const configs = [
+      {
+        titleKey: "lessonStepExploreTitle",
+        textKey: "lessonStepExploreText",
+        actionKey: "lessonActionExplore",
+        done: discoveredCount > 0,
+        onAction: () => {
+          if (missionControlUi) {
+            missionControlUi.overlay.hidden = true;
+            missionControlUi.button.setAttribute("aria-expanded", "false");
+            missionControlUi.button.focus();
+          }
+        }
+      },
+      {
+        titleKey: "lessonStepMissionTitle",
+        textKey: "lessonStepMissionText",
+        actionKey: "lessonActionMissions",
+        done: hasMission || hasQuiz,
+        onAction: () => switchMissionControlTab("missions")
+      },
+      {
+        titleKey: "lessonStepCompareTitle",
+        textKey: "lessonStepCompareText",
+        actionKey: "lessonActionCompare",
+        done: discoveredCount >= 2,
+        onAction: () => switchMissionControlTab("compare")
+      },
+      {
+        titleKey: "lessonStepSimTitle",
+        textKey: "lessonStepSimText",
+        actionKey: "lessonActionSim",
+        done: hasSavedScore || progress.badges.length > 0,
+        onAction: () => switchMissionControlTab("simulator")
+      }
+    ];
+    configs.forEach((config, index) => {
+      config.next = index === firstOpenStep;
+      steps.appendChild(createLessonStep(config));
+    });
+    content.appendChild(steps);
+
+    const sourcesButton = document.createElement("button");
+    sourcesButton.type = "button";
+    sourcesButton.className = "lesson-secondary-action";
+    sourcesButton.textContent = t("lessonActionLearn");
+    sourcesButton.addEventListener("click", () => switchMissionControlTab("learn"));
+    content.appendChild(sourcesButton);
+  };
+
   const createMissionCard = (mission, progress) => {
     const status = getMissionCompletion(mission, progress);
     const card = document.createElement("article");
@@ -6214,7 +6404,9 @@
 
     clearElement(missionControlUi.content);
     stopMissionSimulation();
-    if (missionControlActiveTab === "overview") {
+    if (missionControlActiveTab === "lesson") {
+      renderGuidedJourney(missionControlUi.content, progress);
+    } else if (missionControlActiveTab === "overview") {
       renderMissionOverview(missionControlUi.content, progress);
     } else if (missionControlActiveTab === "project") {
       renderProjectBrief(missionControlUi.content);
@@ -6233,6 +6425,7 @@
 
   const setupMissionControlDashboard = () => {
     const button = document.getElementById("missionControlButton");
+    const lessonButton = document.getElementById("lessonButton");
     if (!button) return;
 
     const overlay = document.createElement("div");
@@ -6282,6 +6475,7 @@
 
     missionControlUi = {
       button,
+      lessonButton,
       overlay,
       title,
       closeButton,
@@ -6289,7 +6483,10 @@
       content
     };
 
-    const open = () => {
+    const open = (tabId) => {
+      if (tabId) {
+        missionControlActiveTab = tabId;
+      }
       renderMissionControlDashboard();
       overlay.hidden = false;
       button.setAttribute("aria-expanded", "true");
@@ -6302,7 +6499,10 @@
       button.focus();
     };
 
-    button.addEventListener("click", open);
+    button.addEventListener("click", () => open());
+    if (lessonButton) {
+      lessonButton.addEventListener("click", () => open("lesson"));
+    }
     closeButton.addEventListener("click", close);
     overlay.addEventListener("click", (event) => {
       if (event.target === overlay) close();
@@ -6317,10 +6517,12 @@
     });
     window.addEventListener("languageChanged", () => {
       applyMissionControlButtonLanguage();
+      applyLessonButtonLanguage();
       if (!overlay.hidden) renderMissionControlDashboard();
     });
 
     applyMissionControlButtonLanguage();
+    applyLessonButtonLanguage();
     renderMissionControlDashboard();
   };
 
@@ -6846,6 +7048,7 @@
 
     applyLeaderboardButtonLanguage();
     applyMissionControlButtonLanguage();
+    applyLessonButtonLanguage();
     if (leaderboardUi) {
       renderLeaderboardDashboard();
     }

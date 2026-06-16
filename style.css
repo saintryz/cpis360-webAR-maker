@@ -730,6 +730,54 @@ html[dir="rtl"] .help-button {
   left: calc(14px + var(--safe-left));
 }
 
+.lesson-button {
+  position: fixed;
+  left: calc(14px + var(--safe-left));
+  bottom: calc(72px + var(--safe-bottom));
+  z-index: 24;
+  min-height: 44px;
+  padding: 10px 15px;
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  border: 1px solid rgba(255, 255, 255, 0.2);
+  border-radius: 999px;
+  color: #ffffff;
+  background: linear-gradient(135deg, rgba(24, 102, 175, 0.86), rgba(28, 138, 101, 0.82));
+  box-shadow: 0 14px 34px rgba(0, 0, 0, 0.44);
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+  font: inherit;
+  font-size: 0.88rem;
+  font-weight: 900;
+  cursor: pointer;
+}
+
+html[dir="rtl"] .lesson-button {
+  left: auto;
+  right: calc(14px + var(--safe-right));
+}
+
+.lesson-button:hover,
+.lesson-button:focus-visible {
+  outline: none;
+  filter: brightness(1.08);
+}
+
+.lesson-button:active {
+  transform: scale(0.97);
+}
+
+.lesson-button-icon {
+  width: 24px;
+  height: 24px;
+  display: inline-grid;
+  place-items: center;
+  border-radius: 50%;
+  background: rgba(255, 255, 255, 0.18);
+  font-size: 0.78rem;
+}
+
 .system-switch-button:hover,
 .system-switch-button:focus-visible,
 .language-switch-button:hover,
@@ -1050,6 +1098,159 @@ html[dir="rtl"] .help-button {
   display: grid;
   gap: 14px;
   padding-right: 2px;
+}
+
+.lesson-hero {
+  min-width: 0;
+  padding: 18px;
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) 190px;
+  gap: 16px;
+  align-items: end;
+  border: 1px solid rgba(255, 255, 255, 0.12);
+  border-radius: 14px;
+  background:
+    radial-gradient(circle at 12% 18%, rgba(111, 210, 255, 0.18), transparent 34%),
+    radial-gradient(circle at 90% 0%, rgba(90, 216, 154, 0.14), transparent 30%),
+    rgba(255, 255, 255, 0.045);
+}
+
+.lesson-eyebrow {
+  display: inline-flex;
+  margin-bottom: 8px;
+  color: rgba(142, 230, 184, 0.92);
+  font-size: 0.74rem;
+  font-weight: 900;
+  text-transform: uppercase;
+}
+
+.lesson-hero h3 {
+  margin: 0;
+  color: #ffffff;
+  font-size: 1.18rem;
+  font-weight: 900;
+}
+
+.lesson-hero p {
+  max-width: 620px;
+  margin: 8px 0 0;
+  color: rgba(255, 255, 255, 0.72);
+  font-size: 0.88rem;
+  line-height: 1.45;
+}
+
+.lesson-meter {
+  min-width: 0;
+  padding: 12px;
+  display: grid;
+  grid-template-columns: 1fr auto;
+  gap: 8px;
+  align-items: center;
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  border-radius: 12px;
+  background: rgba(0, 0, 0, 0.22);
+}
+
+.lesson-meter span {
+  color: rgba(255, 255, 255, 0.66);
+  font-size: 0.72rem;
+  font-weight: 800;
+}
+
+.lesson-meter strong {
+  color: #ffffff;
+  font-size: 1rem;
+  font-variant-numeric: tabular-nums;
+}
+
+.lesson-meter-track {
+  grid-column: 1 / -1;
+  height: 8px;
+  overflow: hidden;
+  border-radius: 999px;
+  background: rgba(255, 255, 255, 0.11);
+}
+
+.lesson-meter-track span {
+  height: 100%;
+  display: block;
+  border-radius: inherit;
+  background: linear-gradient(90deg, #64b5ff, #8ee6b8);
+}
+
+.lesson-stat-grid {
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+}
+
+.lesson-step-grid {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 10px;
+}
+
+.lesson-step-card {
+  min-width: 0;
+  padding: 13px;
+  display: grid;
+  grid-template-rows: auto auto 1fr auto;
+  gap: 8px;
+  border: 1px solid rgba(255, 255, 255, 0.09);
+  border-radius: 12px;
+  background: rgba(255, 255, 255, 0.045);
+}
+
+.lesson-step-card.is-next {
+  border-color: rgba(110, 197, 255, 0.42);
+  background: rgba(38, 105, 176, 0.15);
+}
+
+.lesson-step-card.is-done {
+  border-color: rgba(142, 230, 184, 0.34);
+  background: rgba(38, 128, 87, 0.14);
+}
+
+.lesson-step-status {
+  width: max-content;
+  max-width: 100%;
+  padding: 4px 7px;
+  border-radius: 999px;
+  color: rgba(255, 255, 255, 0.88);
+  background: rgba(255, 255, 255, 0.1);
+  font-size: 0.68rem;
+  font-weight: 900;
+}
+
+.lesson-step-card h3 {
+  margin: 0;
+  color: #ffffff;
+  font-size: 0.92rem;
+  font-weight: 900;
+}
+
+.lesson-step-card p {
+  margin: 0;
+  color: rgba(255, 255, 255, 0.68);
+  font-size: 0.78rem;
+  line-height: 1.38;
+}
+
+.lesson-step-action,
+.lesson-secondary-action {
+  min-height: 38px;
+  border: 1px solid rgba(255, 255, 255, 0.12);
+  border-radius: 10px;
+  color: #ffffff;
+  background: rgba(30, 90, 190, 0.78);
+  font: inherit;
+  font-size: 0.78rem;
+  font-weight: 900;
+  cursor: pointer;
+}
+
+.lesson-secondary-action {
+  justify-self: start;
+  padding: 0 14px;
+  background: rgba(255, 255, 255, 0.08);
 }
 
 .mission-stat-grid {
@@ -1732,6 +1933,19 @@ html[dir="rtl"] .help-button {
     display: none;
   }
 
+  .lesson-button {
+    left: calc(10px + var(--safe-left));
+    bottom: calc(62px + var(--safe-bottom));
+    min-height: 40px;
+    padding: 8px 11px;
+    font-size: 0.78rem;
+  }
+
+  html[dir="rtl"] .lesson-button {
+    left: auto;
+    right: calc(10px + var(--safe-right));
+  }
+
   .mission-control-card {
     max-height: calc(var(--viewport-height) - 20px - var(--safe-top) - var(--safe-bottom));
     padding: 14px;
@@ -1740,6 +1954,16 @@ html[dir="rtl"] .help-button {
 
   .mission-stat-grid {
     grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
+  .lesson-hero {
+    grid-template-columns: 1fr;
+    padding: 14px;
+  }
+
+  .lesson-stat-grid,
+  .lesson-step-grid {
+    grid-template-columns: 1fr;
   }
 
   .mission-card-grid,
@@ -1781,6 +2005,21 @@ html[dir="rtl"] .help-button {
   .leaderboard-button,
   .mission-control-button {
     font-size: 0.78rem;
+  }
+
+  .lesson-button-text {
+    display: none;
+  }
+
+  .lesson-button {
+    width: 42px;
+    height: 42px;
+    padding: 0;
+    justify-content: center;
+  }
+
+  .lesson-button-icon {
+    background: transparent;
   }
 
   .planet-info-stats {
