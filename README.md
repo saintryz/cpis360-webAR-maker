@@ -30,6 +30,18 @@ npm run check
 
 Then test on the actual presentation phone with the Hiro marker, camera permission, and internet access for the CDN libraries.
 
+## Production Baseline
+
+This project now includes the first layer of production hardening:
+
+- safe-area and dynamic viewport support for modern phones
+- Web App Manifest metadata for installable browser/PWA behavior
+- a lightweight service worker that caches only the app shell, not the large GLB models
+- a boot-time AR dependency check that shows a clear message if CDN libraries fail
+- Git LFS tracking for large model assets
+
+See `PRODUCTION_ROADMAP.md` for the next upgrade phases.
+
 ## Demo Flow
 
 1. Open the app and show the onboarding instructions.
@@ -45,6 +57,7 @@ Then test on the actual presentation phone with the Hiro marker, camera permissi
 - `PROJECT_REPORT.md`: report content for problem statement, UX design process, ethics, and prototype explanation.
 - `PRESENTATION_OUTLINE.md`: case-show slide outline, speaker notes, demo flow, and Q&A prep.
 - `ASSET_CREDITS.md`: runtime libraries, model credits, model licenses, and NASA/JPL learning sources.
+- `PRODUCTION_ROADMAP.md`: next steps for moving from course prototype to production app.
 - `index.html`, `main.js`, `style.css`: prototype source.
 - `serve.js`: tiny local server.
 - `.gitattributes`: marks GLB files for Git LFS when publishing to GitHub.

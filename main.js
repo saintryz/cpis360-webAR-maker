@@ -37,6 +37,7 @@
       hudLost: "Searching for the Hiro marker",
       markerLostPersistent: "Marker out of view · system stays put. Drag, pinch & tap still work.",
       supportMessage: "Camera AR needs a browser with WebRTC camera support. Use HTTPS or localhost if your browser blocks camera access.",
+      dependencyMessage: "AR libraries did not load. Check your internet connection, then refresh the page.",
       systemSwitchAria: "Switch planetary system",
       helpAria: "Show how-to instructions",
       languageButton: "العربية",
@@ -231,6 +232,7 @@
       hudLost: "جارٍ البحث عن علامة Hiro",
       markerLostPersistent: "العلامة خارج الكاميرا · النظام سيبقى ظاهرًا. اسحب أو كبّر أو اضغط كما تريد.",
       supportMessage: "الواقع المعزز يحتاج متصفحًا يدعم كاميرا WebRTC. استخدم HTTPS أو localhost إذا منع المتصفح تشغيل الكاميرا.",
+      dependencyMessage: "لم يتم تحميل مكتبات الواقع المعزز. تحقق من اتصال الإنترنت ثم حدّث الصفحة.",
       systemSwitchAria: "تبديل النظام الكوكبي",
       helpAria: "عرض التعليمات",
       languageButton: "English",
@@ -1166,6 +1168,36 @@
   };
   const LEADERBOARD_STORAGE_KEY = "arPlanetaryLeaderboard.v1";
   const ONBOARDING_STORAGE_KEY = "arPlanetaryOnboardingSeen.v1";
+
+  const showBootSupportMessage = (message) => {
+    const render = () => {
+      const loadingScreen = document.getElementById("loadingScreen");
+      if (loadingScreen) {
+        loadingScreen.classList.add("is-hidden");
+        loadingScreen.hidden = true;
+      }
+      const existing = document.querySelector(".support-message");
+      if (existing) {
+        existing.textContent = message;
+        return;
+      }
+      const support = document.createElement("div");
+      support.className = "support-message";
+      support.textContent = message;
+      document.body.appendChild(support);
+    };
+
+    if (document.readyState === "loading") {
+      document.addEventListener("DOMContentLoaded", render, { once: true });
+    } else {
+      render();
+    }
+  };
+
+  if (!window.AFRAME || !window.AFRAME.THREE) {
+    showBootSupportMessage(t("dependencyMessage"));
+    return;
+  }
   const LEADERBOARD_MAX_ENTRIES = 10;
   const PLAYER_NAME_MAX_LENGTH = 28;
   const SCORE_CORRECT_POINTS = 10;
@@ -6840,6 +6872,18 @@
     });
   };
 
+  const setupServiceWorker = () => {
+    if (!("serviceWorker" in navigator) || !window.isSecureContext) {
+      return;
+    }
+
+    window.addEventListener("load", () => {
+      navigator.serviceWorker.register("./sw.js").catch((err) => {
+        console.warn("Service worker registration failed:", err);
+      });
+    }, { once: true });
+  };
+
   const ready = () => {
     setupLeaderboardDashboard();
     setupMissionControlDashboard();
@@ -6847,6 +6891,7 @@
     setupOnboardingAndLoading();
     setupSystemSwitcher();
     setupMarkerPersistence();
+    setupServiceWorker();
   };
 
   if (document.readyState === "loading") {

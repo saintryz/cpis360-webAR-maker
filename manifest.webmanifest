@@ -1,0 +1,19 @@
+{
+  "name": "AR Planetary System Visualizer",
+  "short_name": "AR Planets",
+  "description": "Explore planetary systems through marker-based Web AR, quizzes, missions, and classroom progress tools.",
+  "start_url": ".",
+  "scope": ".",
+  "display": "standalone",
+  "orientation": "any",
+  "background_color": "#02040d",
+  "theme_color": "#050712",
+  "icons": [
+    {
+      "src": "app-icon.svg",
+      "sizes": "any",
+      "type": "image/svg+xml",
+      "purpose": "any maskable"
+    }
+  ]
+}

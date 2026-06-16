@@ -1,0 +1,13 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512" role="img" aria-label="AR Planetary System Visualizer icon">
+  <rect width="512" height="512" rx="112" fill="#050712"/>
+  <circle cx="256" cy="256" r="70" fill="#ffb454"/>
+  <circle cx="256" cy="256" r="116" fill="none" stroke="#6ec5ff" stroke-width="10" opacity=".68"/>
+  <circle cx="256" cy="256" r="174" fill="none" stroke="#8ee6b8" stroke-width="8" opacity=".42"/>
+  <circle cx="365" cy="216" r="24" fill="#5ba5ff"/>
+  <circle cx="156" cy="318" r="18" fill="#d66b44"/>
+  <circle cx="296" cy="80" r="10" fill="#fff8cf" opacity=".85"/>
+  <circle cx="104" cy="154" r="7" fill="#ffffff" opacity=".72"/>
+  <circle cx="426" cy="342" r="8" fill="#ffffff" opacity=".6"/>
+  <path d="M96 404h320" stroke="#ffffff" stroke-width="18" stroke-linecap="round" opacity=".9"/>
+  <path d="M126 404l130-70 130 70" fill="none" stroke="#ffffff" stroke-width="18" stroke-linecap="round" stroke-linejoin="round" opacity=".9"/>
+</svg>
