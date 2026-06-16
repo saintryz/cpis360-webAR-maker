@@ -210,6 +210,10 @@ a-scene .a-canvas,
 }
 
 .onboarding-button {
+  position: sticky;
+  bottom: 0;
+  z-index: 1;
+  width: 100%;
   min-height: 44px;
   border: 1px solid rgba(255, 255, 255, 0.12);
   border-radius: 10px;
@@ -218,6 +222,7 @@ a-scene .a-canvas,
   font: inherit;
   font-weight: 900;
   cursor: pointer;
+  touch-action: manipulation;
 }
 
 .hud-label {
@@ -1738,7 +1743,7 @@ html[dir="rtl"] .lesson-button {
   grid-template-columns: repeat(2, minmax(0, 1fr));
 }
 
-.desktop-view-controls {
+.view-controls {
   display: grid;
   gap: 8px;
   padding: 10px;
@@ -1759,12 +1764,6 @@ html[dir="rtl"] .lesson-button {
 
 .control-view-reset-row .control-button {
   min-height: 34px;
-}
-
-@media (pointer: coarse) {
-  .desktop-view-controls {
-    display: none;
-  }
 }
 
 .support-message {
@@ -1796,18 +1795,14 @@ html[dir="rtl"] .lesson-button {
 @media (max-width: 600px) {
   .control-panel {
     top: auto;
-    left: 10px;
-    right: 10px;
-    bottom: 70px;
+    left: calc(10px + var(--safe-left));
+    right: calc(10px + var(--safe-right));
+    bottom: calc(70px + var(--safe-bottom));
     width: auto;
-    max-height: min(42vh, 310px);
+    max-height: min(52vh, 390px);
     padding: 10px;
     gap: 8px;
     overflow-y: auto;
-  }
-
-  .desktop-view-controls {
-    display: none;
   }
 
   .planet-info {
@@ -1934,8 +1929,9 @@ html[dir="rtl"] .lesson-button {
   }
 
   .lesson-button {
+    top: calc(106px + var(--safe-top));
     left: calc(10px + var(--safe-left));
-    bottom: calc(62px + var(--safe-bottom));
+    bottom: auto;
     min-height: 40px;
     padding: 8px 11px;
     font-size: 0.78rem;

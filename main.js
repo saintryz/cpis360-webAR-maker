@@ -3891,12 +3891,12 @@
       speedRow.appendChild(speedValue);
       panel.appendChild(speedRow);
 
-      // Desktop precision view controls: rotate the whole 3D system to inspect
-      // it from above, below, and the sides.
+      // Precision view controls: rotate the whole 3D system to inspect it
+      // from above, below, and the sides on desktop or phone.
       this.viewSliders = {};
       this.viewValues = {};
       const positionGroup = document.createElement("div");
-      positionGroup.className = "desktop-view-controls";
+      positionGroup.className = "view-controls";
       const positionTitle = document.createElement("div");
       positionTitle.className = "control-section-title";
       positionTitle.textContent = t("viewTitle");
